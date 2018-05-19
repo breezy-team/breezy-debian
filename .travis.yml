@@ -12,7 +12,7 @@ python:
 
 script:
   - BRZ_PLUGINS_AT=debian@. brz plugins -v
-  - make check
+  - BRZ_PLUGINS_AT=debian@. python -Werror -Wignore::ImportWarning -Wignore::PendingDeprecationWarning -Wignore::DeprecationWarning $(which brz) selftest --parallel=fork
 
 install:
   - sudo apt install python-all-dev subunit python-debian python-apt python-testtools patchutils pristine-tar devscripts python-lzma libalgorithm-merge-perl python-distro-info quilt
