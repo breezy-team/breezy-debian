@@ -2,7 +2,7 @@ language: python
 addons:
   apt:
     update: true
-    packages: python-all-dev subunit python-apt python-testtools patchutils pristine-tar devscripts libalgorithm-merge-perl python-distro-info quilt python-debian python-lzma
+    packages: python-all-dev subunit python-apt python-testtools patchutils pristine-tar devscripts libalgorithm-merge-perl python-distro-info quilt python-debian python-lzma libapt-pkg-dev
 sudo: false
 cache: pip
 git:
