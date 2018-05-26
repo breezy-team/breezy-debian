@@ -2,6 +2,7 @@ language: python
 addons:
   apt:
     update: true
+    packages: python-all-dev subunit python-apt python-testtools patchutils pristine-tar devscripts libalgorithm-merge-perl python-distro-info quilt python-debian python-lzma
 sudo: false
 cache: pip
 git:
@@ -15,9 +16,8 @@ script:
   - BRZ_PLUGINS_AT=debian@$(pwd) python -Werror -Wignore::ImportWarning -Wignore::PendingDeprecationWarning -Wignore::DeprecationWarning $(which brz) selftest --parallel=fork
 
 install:
-  - sudo apt install python-all-dev subunit python-debian python-apt python-testtools patchutils pristine-tar devscripts python-lzma libalgorithm-merge-perl python-distro-info quilt
   - travis_retry pip install -U setuptools
-  - travis_retry pip install -U pip coverage codecov flake8 testtools paramiko fastimport configobj cython testscenarios six docutils python-subunit dulwich bzr+lp:brz
+  - travis_retry pip install -U pip coverage codecov flake8 testtools paramiko fastimport configobj cython testscenarios six docutils python-subunit dulwich bzr+lp:brz lzma git+https://salsa.debian.org/apt-team/python-apt.git git+https://salsa.debian.org/python-debian-team/python-debian distro-info
 
 after_success:
   - codecov
