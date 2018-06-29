@@ -1,0 +1,23 @@
+language: python
+addons:
+  apt:
+    update: true
+    packages: python-all-dev subunit python-apt python-testtools patchutils pristine-tar devscripts libalgorithm-merge-perl python-distro-info quilt python-debian python-lzma libapt-pkg-dev
+sudo: false
+cache: pip
+git:
+  depth: false
+
+python:
+  - 2.7
+
+script:
+  - BRZ_PLUGINS_AT=debian@$(pwd) brz plugins -v
+  - BRZ_PLUGINS_AT=debian@$(pwd) python -Werror -Wignore::ImportWarning -Wignore::PendingDeprecationWarning -Wignore::DeprecationWarning $(which brz) selftest --parallel=fork
+
+install:
+  - travis_retry pip install -U setuptools
+  - travis_retry pip install -U pip coverage codecov flake8 testtools paramiko fastimport configobj cython testscenarios six docutils python-subunit dulwich bzr+lp:brz pyliblzma git+https://salsa.debian.org/apt-team/python-apt.git git+https://salsa.debian.org/python-debian-team/python-debian distro-info
+
+after_success:
+  - codecov
