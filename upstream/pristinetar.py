@@ -338,7 +338,7 @@ class BasePristineTarSource(UpstreamSource):
 
     def version_tag(
             self, package: Optional[str], version: str, tarballs=None,
-            try_hard=True) -> str | None:
+            try_hard=True) -> Optional[str]:
         if tarballs is None:
             return self.has_version_component(
                 package, version, component=None, try_hard=try_hard)
@@ -408,7 +408,7 @@ class BasePristineTarSource(UpstreamSource):
 
     def has_version_component(
             self, package: Optional[str], version: str, component,
-            md5=None, try_hard=True) -> str | None:
+            md5=None, try_hard=True) -> Optional[str]:
         for tag_name in self.possible_tag_names(
                 package, version, component=component, try_hard=try_hard):
             try:
