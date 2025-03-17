@@ -33,7 +33,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build deb-new-upstream image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
           file: "Dockerfile.deb-new-upstream"
           tags: |
@@ -42,7 +42,7 @@ jobs:
           push: ${{ github.ref == 'refs/heads/master' }}
 
       - name: Build deb-auto-backport image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
           file: "Dockerfile.deb-auto-backport"
           tags: |
@@ -51,7 +51,7 @@ jobs:
           push: ${{ github.ref == 'refs/heads/master' }}
 
       - name: Build deb-move-orphaned image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
           file: "Dockerfile.deb-move-orphaned"
           tags: |
@@ -60,7 +60,7 @@ jobs:
           push: ${{ github.ref == 'refs/heads/master' }}
 
       - name: Build deb-import-uncommitted image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
           file: "Dockerfile.deb-import-uncommitted"
           tags: |
