@@ -24,8 +24,7 @@ import os
 import re
 import subprocess
 import tempfile
-from typing import Optional
-from collections.abc import Iterable
+from typing import Optional, Iterable
 
 from debian.changelog import Version
 from debmutate.versions import (
