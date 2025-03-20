@@ -51,8 +51,8 @@ def merge_changelog(this_lines, other_lines, base_lines=[]):
     with tempfile.TemporaryDirectory('deb_changelog_merge') as tmpdir:
         def writelines(filename, lines):
             with open(filename, 'wb') as f:
-                for line in lines:
-                    f.write(line)
+                f.writelines(lines)
+                f.flush()
         base_filename = os.path.join(tmpdir, 'changelog.base')
         this_filename = os.path.join(tmpdir, 'changelog.this')
         other_filename = os.path.join(tmpdir, 'changelog.other')
