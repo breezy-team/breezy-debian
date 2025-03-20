@@ -1,3 +1,9 @@
+breezy-debian (2.8.80) UNRELEASED; urgency=medium
+
+  * Move Vcs to Git on salsa.
+
+ -- Jelmer Vernooĳ <jelmer@debian.org>  Thu, 20 Mar 2025 19:41:36 +0000
+
 breezy-debian (2.8.79) unstable; urgency=medium
 
   * Depend on breezy with fixed timezone handling. Closes: #1064713
