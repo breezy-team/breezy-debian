@@ -27,10 +27,10 @@ check:: testsuite
 testsuite:
 	BRZ_PLUGINS_AT=debian@$(shell pwd) $(BRZ) $(BRZ_OPTIONS) selftest $(TEST_OPTIONS) $(TESTS)
 
-check:: flake8
+check:: ruff
 
-flake8:
-	flake8 . scripts/deb-*
+ruff:
+	ruff check . scripts/deb-*
 
 mypy:
 	BRZ_PLUGINS_AT=debian@$(shell pwd) mypy -p breezy.plugins.debian
