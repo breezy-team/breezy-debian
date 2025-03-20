@@ -1,4 +1,4 @@
-breezy-debian (2.8.80) UNRELEASED; urgency=medium
+breezy-debian (2.8.80) unstable; urgency=medium
 
   * Move Vcs to Git on salsa.
 
