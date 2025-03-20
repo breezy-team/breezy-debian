@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: breezy-debian\n"
 "Report-Msgid-Bugs-To: <bazaar@lists.canonical.com>\n"
-"POT-Creation-Date: 2022-10-21 00:01+0100\n"
+"POT-Creation-Date: 2025-03-20 11:20+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,190 +17,157 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: __init__.py:234
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/__init__.py:234
-#: build/lib/breezy/plugins/debian/__init__.py:234
+#: __init__.py:209
 #, python-format
 msgid ""
 "Not attempting to fix packaging branch ancestry, missing pristine tar data "
 "for version %s."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:144
-#: build/lib/breezy/plugins/debian/cmds.py:133 cmds.py:133
+#: cmds.py:133
 msgid ""
 "There are uncommitted changes in the working tree. You must commit before "
 "using this command"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:167
-#: build/lib/breezy/plugins/debian/cmds.py:156 cmds.py:156
+#: cmds.py:156
 #, python-format
 msgid "No distribution specified, and no changelog, assuming '%s'"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:177
-#: build/lib/breezy/plugins/debian/cmds.py:166 cmds.py:166
+#: cmds.py:166
 #, python-format
 msgid "Using distribution %s"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:180
-#: build/lib/breezy/plugins/debian/cmds.py:169 cmds.py:169
+#: cmds.py:169
 #, python-format
 msgid ""
 "No distribution specified, and no previous distribution in changelog. "
 "Assuming '%s'"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:187
-#: build/lib/breezy/plugins/debian/cmds.py:176 cmds.py:176
+#: cmds.py:176
 #, python-format
 msgid "Unknown target distribution: %s"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:294
-#: build/lib/breezy/plugins/debian/cmds.py:283 cmds.py:283
+#: cmds.py:284
 #, python-format
 msgid "Building package in %s mode"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:416
-#: build/lib/breezy/plugins/debian/cmds.py:406 cmds.py:406
+#: cmds.py:407
 msgid "Building using working tree"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:424
-#: build/lib/breezy/plugins/debian/cmds.py:414 cmds.py:414
+#: cmds.py:415
 msgid "bzr builddeb --revision takes exactly one revision specifier."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:426
-#: build/lib/breezy/plugins/debian/cmds.py:416 cmds.py:416
+#: cmds.py:417
 #, python-format
 msgid "Building branch from revision %s"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:539
-#: build/lib/breezy/plugins/debian/cmds.py:529 cmds.py:529
+#: cmds.py:530
 #, python-format
 msgid "Unable to parse upstream metadata file %s: %s"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:542
-#: build/lib/breezy/plugins/debian/cmds.py:532 cmds.py:532
+#: cmds.py:533
 msgid "Reusing existing build dir"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:554
-#: build/lib/breezy/plugins/debian/cmds.py:544 cmds.py:544
+#: cmds.py:545
 #, python-format
 msgid "Unable to parse changelog: %s"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:691
-#: build/lib/breezy/plugins/debian/cmds.py:681 cmds.py:681
+#: cmds.py:682
 #, python-format
 msgid "Tar now in %s"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:880
-#: build/lib/breezy/plugins/debian/cmds.py:870 cmds.py:870
+#: cmds.py:875
 msgid "Merge upstream in native mode is not supported."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:891
-#: build/lib/breezy/plugins/debian/cmds.py:881 cmds.py:881
+#: cmds.py:886
 #, python-format
 msgid "Using upstream branch %s (from configuration)"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:942
-#: build/lib/breezy/plugins/debian/cmds.py:932 cmds.py:932
+#: cmds.py:939
 msgid "--snapshot requires an upstream branch source"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:951
-#: build/lib/breezy/plugins/debian/cmds.py:941 cmds.py:941
+#: cmds.py:949
 msgid ""
 "no upstream source location known; add watch file or specify upstream "
 "repository?"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:958
-#: build/lib/breezy/plugins/debian/cmds.py:948 cmds.py:949
+#: cmds.py:957
 msgid "--revision can only be used with a valid upstream branch"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:962
-#: build/lib/breezy/plugins/debian/cmds.py:952 cmds.py:953
+#: cmds.py:961
 msgid "merge-upstream takes only a single --revision"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:979
-#: build/lib/breezy/plugins/debian/cmds.py:969 cmds.py:972
+#: cmds.py:981
 msgid ""
 "You must specify the version number using --version or specify --snapshot to "
 "merge a snapshot from the upstream branch."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:985
-#: build/lib/breezy/plugins/debian/cmds.py:975 cmds.py:978
+#: cmds.py:987
 msgid "You must specify the version number using --version."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:987
-#: build/lib/breezy/plugins/debian/cmds.py:977 cmds.py:980
+#: cmds.py:989
 #, python-format
 msgid "Using version string %s."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1035
-#: build/lib/breezy/plugins/debian/cmds.py:1025 cmds.py:1029
+#: cmds.py:1038
 #, python-format
 msgid "Upstream version %s has already been merged."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1041
-#: build/lib/breezy/plugins/debian/cmds.py:1031 cmds.py:1035
+#: cmds.py:1044
 msgid "An entry for the new upstream version has been added to the changelog."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1044
-#: build/lib/breezy/plugins/debian/cmds.py:1034 cmds.py:1038
+#: cmds.py:1047
 msgid "The new upstream version has been imported."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1046
-#: build/lib/breezy/plugins/debian/cmds.py:1036 cmds.py:1040
+#: cmds.py:1049
 msgid ""
 "You should now resolve the conflicts, review the changes, and then commit."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1049
-#: build/lib/breezy/plugins/debian/cmds.py:1039 cmds.py:1043
+#: cmds.py:1052
 msgid "You should now review the changes and then commit."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1125
-#: build/lib/breezy/plugins/debian/cmds.py:1115 cmds.py:1119
+#: cmds.py:1128
 msgid "There is no tree to import the packages in to"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1140
-#: build/lib/breezy/plugins/debian/cmds.py:1130 cmds.py:1134
+#: cmds.py:1143
 msgid ""
 "You must give the location of at least one source package to install, or use "
 "the --file option."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1146
-#: build/lib/breezy/plugins/debian/cmds.py:1136 cmds.py:1140
+#: cmds.py:1149
 msgid "import-dsc in merge mode is not yet supported."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1163
-#: build/lib/breezy/plugins/debian/cmds.py:1153 cmds.py:1157
+#: cmds.py:1166
 #, python-format
 msgid ""
 "Unable to find the tag for the previous upstream version (%(version)s) in "
@@ -208,91 +175,82 @@ msgid ""
 "present in the branch please make sure it is tagged as %(tag)r."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1249
-#: build/lib/breezy/plugins/debian/cmds.py:1239 cmds.py:1243
+#: cmds.py:1254
 #, python-format
 msgid "Version %s is already present."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1280
-#: build/lib/breezy/plugins/debian/cmds.py:1270 cmds.py:1275
+#: cmds.py:1289
 msgid "bzr import-upstream --revision takes exactly one revision specifier."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1290
-#: build/lib/breezy/plugins/debian/cmds.py:1280 cmds.py:1285
+#: cmds.py:1299
 #, python-format
 msgid "Imported %(location)s as tag:%(tag)s.\n"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1294
-#: build/lib/breezy/plugins/debian/cmds.py:1284 cmds.py:1289
+#: cmds.py:1303
 #, python-format
 msgid "Imported %(location)s (%(component)s) as tag:%(tag)s.\n"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1377
-#: build/lib/breezy/plugins/debian/cmds.py:1366 cmds.py:1371
+#: cmds.py:1385
 msgid ""
 "This command only works for merge mode packages. See /usr/share/doc/bzr-"
 "builddeb/user_manual/merge.html for more information."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1420
-#: build/lib/breezy/plugins/debian/cmds.py:1409 cmds.py:1414
+#: cmds.py:1428
 #, python-format
 msgid "Running \"%s\" in the exported directory."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1422
-#: build/lib/breezy/plugins/debian/cmds.py:1411 cmds.py:1416
+#: cmds.py:1430
 msgid ""
 "If you want to cancel your changes then exit with a non-zero exit code, e.g. "
 "run \"exit 1\"."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1430
-#: build/lib/breezy/plugins/debian/cmds.py:1419 cmds.py:1424
+#: cmds.py:1438
 msgid "Not updating the working tree as the command failed."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1437
-#: build/lib/breezy/plugins/debian/cmds.py:1426 cmds.py:1431
+#: cmds.py:1445
 msgid "After build processing failed. Aborting."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1438
-#: build/lib/breezy/plugins/debian/cmds.py:1427 cmds.py:1432
+#: cmds.py:1446
 msgid "Copying debian/ back"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1451
-#: build/lib/breezy/plugins/debian/cmds.py:1440 cmds.py:1445
+#: cmds.py:1459
 msgid "Copying back debian/ failed"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1453
-#: build/lib/breezy/plugins/debian/cmds.py:1442 cmds.py:1447
+#: cmds.py:1461
 msgid ""
 "If any files were added or removed you should run \"bzr add\" or \"bzr rm\" "
 "as appropriate."
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/cmds.py:1521
-#: build/lib/breezy/plugins/debian/cmds.py:1510 cmds.py:1515
+#: cmds.py:1529
 msgid "No unmerged revisions"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/upstream/branch.py:456
-#: build/lib/breezy/plugins/debian/upstream/branch.py:455
-#: upstream/branch.py:465
+#: upstream/branch.py:469
 #, python-format
 msgid "No upstream upstream-revision format specified, trying %s"
 msgstr ""
 
-#: build/lib.linux-x86_64-2.7/breezy/plugins/debian/upstream/branch.py:511
-#: build/lib/breezy/plugins/debian/upstream/branch.py:510
-#: upstream/branch.py:523
+#: upstream/branch.py:527
+msgid "Current version is release, merging new release."
+msgstr ""
+
+#: upstream/branch.py:531
+msgid "Current version is snapshot, merging new snapshot."
+msgstr ""
+
+#: upstream/branch.py:540
 msgid "No upstream releases found, falling back to snapshot."
 msgstr ""
 
@@ -426,24 +384,24 @@ msgid ""
 msgstr ""
 
 # help of 'export-only' option of 'builddeb' command
-#: cmds.py:354
+#: cmds.py:355
 msgid "Export only, don't build."
 msgstr ""
 
 # help of 'use-existing' option of 'builddeb' command
-#: cmds.py:357
+#: cmds.py:358
 msgid "Use an existing build directory."
 msgstr ""
 
 # help of 'quick' option of 'builddeb' command
-#: cmds.py:358
+#: cmds.py:359
 msgid ""
 "Quickly build the package, uses quick-builder, which defaults to \"fakeroot "
 "debian/rules binary\"."
 msgstr ""
 
 # help of 'reuse' option of 'builddeb' command
-#: cmds.py:361
+#: cmds.py:362
 msgid ""
 "Try to avoid exporting too much on each build. Only works in merge mode; it "
 "saves unpacking the upstream tarball each time. Implies --dont-purge and --"
@@ -451,23 +409,23 @@ msgid ""
 msgstr ""
 
 # help of 'source' option of 'builddeb' command
-#: cmds.py:365
+#: cmds.py:366
 msgid "Build a source package."
 msgstr ""
 
 # help of 'package-merge' option of 'builddeb' command
-#: cmds.py:372
+#: cmds.py:373
 msgid ""
 "Build using the appropriate -v and -sa options for merging in the changes "
 "from another source."
 msgstr ""
 
-#: cmds.py:621
+#: cmds.py:622
 msgid "Gets the upstream tar file for the packaging branch."
 msgstr ""
 
 # help of 'directory' option of 'get-orig-source' command
-#: cmds.py:625
+#: cmds.py:626
 msgid "Directory from which to retrieve the packaging data"
 msgstr ""
 
@@ -551,73 +509,78 @@ msgid ""
 msgstr ""
 
 # help of 'package' option of 'merge-upstream' command
-#: cmds.py:736
+#: cmds.py:737
 msgid "The name of the source package."
 msgstr ""
 
 # help of 'version' option of 'merge-upstream' command
-#: cmds.py:740
+#: cmds.py:741
 msgid "The upstream version number of this release, for example \"0.2\"."
 msgstr ""
 
 # help of 'distribution' option of 'merge-upstream' command
-#: cmds.py:743
+#: cmds.py:744
 msgid "The distribution that this release is targetted at."
 msgstr ""
 
 # help of 'directory' option of 'merge-upstream' command
-#: cmds.py:746
+#: cmds.py:747
 msgid "Working tree into which to merge."
 msgstr ""
 
 # help of 'last-version' option of 'merge-upstream' command
-#: cmds.py:749
+#: cmds.py:750
 msgid "The full version of the last time upstream was merged."
 msgstr ""
 
 # help of 'force' option of 'merge-upstream' command
-#: cmds.py:752
+#: cmds.py:753
 msgid "Force a merge even if the upstream branch has not changed."
 msgstr ""
 
 # help of 'snapshot' option of 'merge-upstream' command
-#: cmds.py:755
+#: cmds.py:756
 msgid ""
 "Merge a snapshot from the upstream branch rather than a new upstream release."
 msgstr ""
 
 # help of 'release' option of 'merge-upstream' command
-#: cmds.py:759
+#: cmds.py:760
 msgid "Merge a release from the upstream branch."
 msgstr ""
 
 # help of 'force-pristine-tar' option of 'merge-upstream' command
-#: cmds.py:763
+#: cmds.py:764
 msgid "Force the use of pristine-tar, even if no pristine-tar branch exists"
 msgstr ""
 
 # help of 'dist-command' option of 'merge-upstream' command
-#: cmds.py:768
+#: cmds.py:769
 msgid "Command to run for creating an upstream tarball from a VCS snapshot."
 msgstr ""
 
 # help of 'guess-upstream-branch-url' option of 'builddeb' command
-#: cmds.py:773
+#: cmds.py:774
 msgid "Guess upstream branch URL if unknown (requires upstream-ontologist)"
 msgstr ""
 
-#: cmds.py:1048
+# help of 'skip-signatures' option of 'merge-upstream' command
+#: cmds.py:784
+msgid "Allow signatures for e.g. upstream tarball to be missing"
+msgstr ""
+
+#: cmds.py:1056
 msgid "Import a series of source packages."
 msgstr ""
 
-#: cmds.py:1050
+#: cmds.py:1058
 msgid ""
 "Provide a number of source packages (.dsc files), and they will\n"
 "be imported to create a branch with history that reflects those\n"
 "packages."
 msgstr ""
 
-#: cmds.py:1054
+#: cmds.py:1062
 msgid ""
 "The first argument is the distribution that these source packages\n"
 "were uploaded to, one of \"debian\" or \"ubuntu\". It can also\n"
@@ -625,7 +588,7 @@ msgid ""
 "which will be resolved to the correct distribution."
 msgstr ""
 
-#: cmds.py:1059
+#: cmds.py:1067
 msgid ""
 "You can also specify a file (possibly remote) that contains a\n"
 "list of source packages (.dsc files) to import using the --file\n"
@@ -634,7 +597,7 @@ msgid ""
 "specified on the command line."
 msgstr ""
 
-#: cmds.py:1065
+#: cmds.py:1073
 msgid ""
 "If you have an existing branch containing packaging and you want to\n"
 "import a .dsc from an upload done from outside the version control\n"
@@ -642,192 +605,9 @@ msgid ""
 msgstr ""
 
 # help of 'file' option of 'import-dsc' command
-#: cmds.py:1072
+#: cmds.py:1081
 msgid "File containing URIs of source packages to import."
 msgstr ""
 
-#: cmds.py:1176
-msgid "Imports an upstream tarball."
-msgstr ""
-
-#: cmds.py:1178
-msgid ""
-"This will import an upstream tarball in to your branch, but not modify the\n"
-"working tree. Use merge-upstream if you wish to directly merge the new\n"
-"upstream version in to your tree."
-msgstr ""
-
-#: cmds.py:1182
-msgid ""
-"The imported revision can be accessed using the tag name that will be\n"
-"reported at the end of a successful operation. The revision will include\n"
-"the pristine-tar data that will allow other commands to recreate the\n"
-"tarball when needed."
-msgstr ""
-
-#: cmds.py:1187
-msgid "For instance::"
-msgstr ""
-
-#: cmds.py:1189
-msgid "    $ bzr import-upstream 1.2.3 ../package_1.2.3.orig.tar.gz"
-msgstr ""
-
-#: cmds.py:1191
-msgid ""
-"If upstream is packaged in bzr, you should provide the upstream branch\n"
-"whose tip commit is the closest match to the tarball::"
-msgstr ""
-
-#: cmds.py:1194
-msgid ""
-"    $ bzr import-upstream 1.2.3 ../package_1.2.3.orig.tar.gz ../upstream"
-msgstr ""
-
-#: cmds.py:1196
-msgid ""
-"After doing this, commands that assume there is an upstream tarball, like\n"
-"'bzr builddeb' will be able to recreate the one provided at import-upstream\n"
-"time, meaning that you don't need to distribute the tarball in addition to\n"
-"the branch."
-msgstr ""
-
-#: cmds.py:1201
-msgid "If you want to manually merge with the imported upstream, you can do::"
-msgstr ""
-
-#: cmds.py:1203
-msgid "    $ bzr merge . -r tag:upstream-1.2.3"
-msgstr ""
-
-#: cmds.py:1205
-msgid ""
-"The imported revision will have file ids taken from your branch, the\n"
-"upstream branch, or previous tarball imports as necessary. In addition\n"
-"the parents of the new revision will be the previous upstream tarball\n"
-"import and the tip of the upstream branch if you supply one."
-msgstr ""
-
-# help of 'force-pristine-tar' option of 'import-upstream' command
-#: cmds.py:1215
-msgid ""
-"Force creation of a new pristine-tar branch, even if one does not exist."
-msgstr ""
-
-#: cmds.py:1297
-msgid "Run a command in an exported package, copying the result back."
-msgstr ""
-
-#: cmds.py:1299
-msgid ""
-"For a merge mode package the full source is not available, making some\n"
-"operations difficult. This command allows you to run any command in an\n"
-"exported source directory, copying the resulting debian/ directory back\n"
-"to your branch if the command is successful."
-msgstr ""
-
-#: cmds.py:1304
-msgid "For instance:"
-msgstr ""
-
-#: cmds.py:1306
-msgid "  bzr builddeb-do"
-msgstr ""
-
-#: cmds.py:1308
-msgid ""
-"will run a shell in the unpacked source. Any changes you make in the\n"
-"``debian/`` directory (and only those made in that directory) will be\n"
-"copied back to the branch. If you exit with a non-zero exit code (e.g.\n"
-"\"exit 1\"), then the changes will not be copied back."
-msgstr ""
-
-#: cmds.py:1313
-msgid "You can also specify single commands to be run, e.g."
-msgstr ""
-
-#: cmds.py:1315
-msgid "  bzr builddeb-do \"dpatch-edit-patch 01-fix-build\""
-msgstr ""
-
-#: cmds.py:1317
-msgid ""
-"Note that only the first argument is used as the command, and so the above\n"
-"example had to be quoted."
-msgstr ""
-
-# help of 'no-preparation' option of 'builddeb-do' command
-#: cmds.py:1323
-msgid "Don't apply/unapply patches."
-msgstr ""
-
-#: cmds.py:1452
-msgid "Format the changes in a branch as a DEP-3 patch."
-msgstr ""
-
-#: cmds.py:1454
-msgid ""
-"This will generate a patch file containing as much information\n"
-"specified by DEP-3 (http://dep.debian.net/deps/dep3/) as possible."
-msgstr ""
-
-#: cmds.py:1457
-msgid ""
-"The patch will contain all changes that are not merged into\n"
-"the current branch (either that in the current working directory\n"
-"or specified by --directory) but are present and committed\n"
-"in the branch at the specified location."
-msgstr ""
-
-#: cmds.py:1462
-msgid ""
-"To generate the \"Status\" header, this command will check the\n"
-"upstream branch to verify if the change has made it upstream,\n"
-"unless --no-upstream-check was specified."
-msgstr ""
-
-#: cmds.py:1466
-msgid "examples::"
-msgstr ""
-
-#: cmds.py:1468
-msgid ""
-"    bzr dep3-patch lp:~user/project/feature-branch > \\\n"
-"            debian/patches/01_feature"
-msgstr ""
-
-# help of 'directory' option of 'dep3-patch' command
-#: cmds.py:1475
-msgid "Packaging tree for which to generate patch."
-msgstr ""
-
-# help of 'no-upstream-check' option of 'dep3-patch' command
-#: cmds.py:1480
-msgid "Don't check whether patch has been merged upstream."
-msgstr ""
-
-#: cmds.py:1616
-msgid "Release a new version of a package."
-msgstr ""
-
-#: cmds.py:1618
-msgid ""
-"This will update the latest distribution in the changelog,\n"
-"build the package and upload."
-msgstr ""
-
-#: cmds.py:1621
-msgid "Location can be remote."
-msgstr ""
-
-# help of 'strict' option of 'builddeb' command
-#: cmds.py:1626
-msgid ""
-"Refuse to build if there are unknown files in the working tree, --no-strict "
-"disables the check."
-msgstr ""
-
-# help of 'skip-upload' option of 'debrelease' command
-#: cmds.py:1632
-msgid "Skip upload."
-msgstr ""
+#: cmds.py:1184
+msgid "Imports an
