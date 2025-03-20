@@ -21,6 +21,7 @@
 
 import logging
 
+import subprocess
 from testtools.content_type import ContentType
 from testtools.content import Content
 
@@ -30,7 +31,30 @@ from .... import (
 )
 from ... import debian
 from .. import merge_changelog
-from ....tests.features import ExecutableFeature
+from ....tests.features import ExecutableFeature, Feature
+
+
+class _AlgorithmMergeFeature(Feature):
+    def _probe(self):
+        try:
+            exitcode = subprocess.call(
+                ["perl", "-MAlgorithm::Merge", "-e", "1"], stderr=subprocess.PIPE, stdout=subprocess.PIPE
+            )
+            return exitcode == 0
+        except OSError as e:
+            import errno
+
+            if e.errno == errno.ENOENT:
+                # perl is not installed
+                return False
+            else:
+                raise
+
+    def feature_name(self):
+        return "Algorithm::Merge"
+
+
+algorithm_merge_feature = _AlgorithmMergeFeature()
 
 
 dpkg_mergechangelogs_feature = ExecutableFeature('dpkg-mergechangelogs')
@@ -219,6 +243,7 @@ class TestMergeChangelog(tests.TestCase):
                                   base_lines=v_111_2)
 
     def test_3way_conflicted(self):
+        self.requireFeature(algorithm_merge_feature)
         self.assertMergeChangelog(
             expected_lines=v_111_2bc,
             this_lines=v_111_2b, other_lines=v_111_2c,
