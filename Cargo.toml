@@ -7,4 +7,4 @@ license = "GPL-2.0+"
 description = "Debian support for Breezy"
 
 [dependencies]
-debversion = { version = "0.4.7", features = ["python-debian"] }
+debversion = { version = "0.5.1", features = ["python-debian"] }
