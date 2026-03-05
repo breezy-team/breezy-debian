@@ -1,3 +1,10 @@
+breezy-debian (2.8.81) UNRELEASED; urgency=medium
+
+  * Fix test failures with newer dpkg-source that validates Maintainer
+    field format. Closes: #1127501
+
+ -- Jelmer Vernooĳ <jelmer@debian.org>  Thu, 05 Mar 2026 10:47:40 +0000
+
 breezy-debian (2.8.80) unstable; urgency=medium
 
   * Move Vcs to Git on salsa.

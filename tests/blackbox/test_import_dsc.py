@@ -72,7 +72,7 @@ class TestBaseImportDsc(BuilddebTestCase):
         self.write_changelog(cl, os.path.join(debian_dir, "changelog"))
         with open(os.path.join(debian_dir, "control"), "w") as f:
             f.write("Source: %s\n" % self.package_name)
-            f.write("Maintainer: none\n")
+            f.write("Maintainer: Test User <test@example.com>\n")
             f.write("Standards-Version: 3.7.2\n")
             f.write("\n")
             f.write("Package: %s\n" % self.package_name)
