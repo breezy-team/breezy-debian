@@ -102,6 +102,20 @@ def MockSource(name, version, files):
     return dsc
 
 
+def MockSourceSha256(name, version, files):
+    """Create a mock source with only Checksums-Sha256, no Files field.
+
+    This simulates what apt returns when the Sources index has dropped
+    MD5 checksums.
+    """
+    dsc = Dsc({"Package": name, "Version": version})
+    dsc["Checksums-Sha256"] = [
+        {"sha256": checksum, "size": size, "name": name}
+        for (checksum, size, name, kind) in files
+    ]
+    return dsc
+
+
 class MockApt(Apt):
     def __init__(self, sources):
         self._sources = sources
@@ -217,6 +231,24 @@ class AptSourceTests(TestCase):
             "apackage", "0.1-1", [("checksum", 0, "apackage_0.1.orig.tar.gz", "tar")]
         )
         source2 = MockSource(
+            "apackage", "0.2-1", [("checksum", 0, "apackage_0.2.orig.tar.gz", "tar")]
+        )
+        apt = MockApt([source1, source2])
+        caller = MockAptCaller()
+        apt._run_apt_source = caller.call
+        src = AptSource(apt)
+        paths = src.fetch_tarballs("apackage", "0.2", "target")
+        self.assertEqual(paths, ["target/apackage_0.2.orig.tar.gz"])
+        self.assertEqual(1, caller.called)
+        self.assertEqual("apackage", caller.package)
+        self.assertEqual("0.2-1", caller.version_str)
+        self.assertEqual("target", caller.target_dir)
+
+    def test_apt_provider_sha256_only(self):
+        source1 = MockSourceSha256(
+            "apackage", "0.1-1", [("checksum", 0, "apackage_0.1.orig.tar.gz", "tar")]
+        )
+        source2 = MockSourceSha256(
             "apackage", "0.2-1", [("checksum", 0, "apackage_0.2.orig.tar.gz", "tar")]
         )
         apt = MockApt([source1, source2])

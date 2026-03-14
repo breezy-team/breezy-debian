@@ -1,3 +1,10 @@
+breezy-debian (2.8.82) UNRELEASED; urgency=medium
+
+  * Fix AptSource to fall back to Checksums-Sha256 when Files field is
+    absent from apt Sources index.
+
+ -- Jelmer Vernooĳ <jelmer@debian.org>  Sat, 14 Mar 2026 19:38:37 +0000
+
 breezy-debian (2.8.81) unstable; urgency=medium
 
   * Fix test failures with newer dpkg-source that validates Maintainer
