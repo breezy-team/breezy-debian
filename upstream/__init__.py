@@ -162,7 +162,17 @@ class AptSource(UpstreamSource):
             try:
                 for source in self.apt.iter_source_by_name(package):
                     filenames = []
-                    for entry in source["Files"]:
+                    for checksum_field in [
+                        "Files",
+                        "Checksums-Sha256",
+                        "Checksums-Sha1",
+                    ]:
+                        if checksum_field in source:
+                            file_entries = source[checksum_field]
+                            break
+                    else:
+                        continue
+                    for entry in file_entries:
                         filename = os.path.basename(entry["name"])
                         if filename.startswith(
                             "{}_{}.orig".format(package, upstream_version)
