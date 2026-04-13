@@ -9,7 +9,7 @@ authors = [{name = "Breezy Developers", email = "breezy-core@googlegroups.com"}]
 license = {text = "GNU GPL v2"}
 dependencies = [
     "pyyaml",
-    "breezy>=3.3.0.dev.0",
+    "breezy>=3.3.21",
     "debmutate[watch]>=0.60",
     "python_debian",
     "python-apt@git+https://salsa.debian.org/apt-team/python-apt",
