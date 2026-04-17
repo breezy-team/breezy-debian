@@ -10,7 +10,7 @@ license = {text = "GNU GPL v2"}
 dependencies = [
     "pyyaml",
     "breezy>=3.3.21",
-    "debmutate[watch]>=0.60",
+    "debmutate[watch]>=0.75",
     "python_debian",
     "python-apt@git+https://salsa.debian.org/apt-team/python-apt",
     "distro-info",
