@@ -26,24 +26,28 @@ import shutil
 import tempfile
 from typing import Optional
 
+try:
+    from ...errors import NotLocalUrl
+except ImportError:
+    from dromedary.errors import NotLocalUrl
+try:
+    from ...transport import FileExists, NoSuchFile
+except ImportError:
+    from dromedary.errors import FileExists, NoSuchFile
+
 from ... import (
     urlutils,
 )
 from ...branch import Branch
+from ...commands import Command
 from ...controldir import (
     ControlDir,
     NoColocatedBranchSupport,
 )
-from ...commands import Command
 from ...errors import (
     BzrCommandError,
     NotBranchError,
-    NotLocalUrl,
     NoWorkingTree,
-)
-from ...transport import (
-    FileExists,
-    NoSuchFile,
 )
 from ...option import Option
 from ...trace import mutter, note, warning

@@ -35,17 +35,24 @@ from debmutate.versions import (
 )
 
 from .... import osutils
+try:
+    from ....errors import GhostRevisionsHaveNoRevno
+except ImportError:
+    from vcsgraph.errors import GhostRevisionsHaveNoRevno
 from ....branch import (
     Branch,
 )
+try:
+    from ....errors import RevisionNotPresent
+except ImportError:
+    from bzrformats.errors import RevisionNotPresent
+
 from ....errors import (
     BzrError,
-    GhostRevisionsHaveNoRevno,
     InvalidRevisionId,
     NoSuchRevision,
     NoSuchTag,
     NotBranchError,
-    RevisionNotPresent,
     UnsupportedOperation,
 )
 from ....memorybranch import MemoryBranch
