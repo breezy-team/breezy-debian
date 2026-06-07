@@ -33,7 +33,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -U pip "setuptools>=60" cython breezy
-          python -m pip install -U pip coverage codecov cython testscenarios
+          python -m pip install -U pip coverage codecov cython testscenarios testtools
           python -m pip install ".[dev,paramiko,doc,launchpad,git]"
       - name: Set BRZ_PLUGINS_AT
         run: |
