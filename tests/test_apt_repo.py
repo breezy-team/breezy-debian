@@ -18,12 +18,14 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 
+import shutil
+
 from breezy.tests import TestCase
 
 from debian.deb822 import Dsc
 
 
-from ..apt_repo import LocalApt, NoAptSources
+from ..apt_repo import LocalApt, NoAptSources, RemoteApt
 
 
 class MockSources:
@@ -115,6 +117,16 @@ class MockAptCaller:
         return self.work
 
 
+class MockAptCache:
+    def __init__(self, calls):
+        self.close_called_times = 0
+        self._calls = calls
+
+    def close(self):
+        self.close_called_times += 1
+        self._calls.append("close")
+
+
 class LocalAptTests(TestCase):
     def test_get_apt_command_for_source(self):
         self.assertEqual(
@@ -200,3 +212,22 @@ class LocalAptTests(TestCase):
             ],
             list(src.iter_source_by_name("apackage")),
         )
+
+
+class RemoteAptExitTests(TestCase):
+    def test_closes_cache_before_rmtree(self):
+        # The apt.Cache opened in __enter__ holds descriptors into
+        # _rootdir; __exit__ must close it (and drop our reference) before
+        # rmtree'ing that directory, not after.
+        calls = []
+        remote = RemoteApt("http://example.com/debian", "sid", ["main"])
+        remote._rootdir = "/nonexistent/rootdir"
+        remote.cache = MockAptCache(calls)
+        self.overrideAttr(
+            shutil, "rmtree", lambda path: calls.append(("rmtree", path))
+        )
+
+        remote.__exit__(None, None, None)
+
+        self.assertEqual(["close", ("rmtree", "/nonexistent/rootdir")], calls)
+        self.assertIsNone(remote.cache)
