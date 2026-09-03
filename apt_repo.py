@@ -230,6 +230,7 @@ class RemoteApt(LocalApt):
         self._rootdir = tempfile.mkdtemp()
         aptdir = os.path.join(self._rootdir, "etc", "apt")
         os.makedirs(aptdir)
+        os.makedirs(os.path.join(aptdir, "trusted.gpg.d"))
         if self.key_path:
             tag = "[signed-by=%s]" % self.key_path
         else:
@@ -273,6 +274,10 @@ class RemoteApt(LocalApt):
         self.apt_pkg.config.set("Dir", self._rootdir)
 
     def __exit__(self, exc_tp, exc_val, exc_tb):
+        # Release apt's fds before removing the tree
+        if self.cache is not None:
+            self.cache.close()
+            self.cache = None
         shutil.rmtree(self._rootdir)
         return False
 
