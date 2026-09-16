@@ -273,6 +273,11 @@ class RemoteApt(LocalApt):
         self.apt_pkg.config.set("Dir", self._rootdir)
 
     def __exit__(self, exc_tp, exc_val, exc_tb):
+        # Release apt's fds before removing the tree
+        cache = self.cache
+        self.cache = None
+        if cache is not None:
+            cache.close()
         shutil.rmtree(self._rootdir)
         return False
 

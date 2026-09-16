@@ -18,12 +18,16 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 
+import os
+import shutil
+import tempfile
+
 from breezy.tests import TestCase
 
 from debian.deb822 import Dsc
 
 
-from ..apt_repo import LocalApt, NoAptSources
+from ..apt_repo import LocalApt, NoAptSources, RemoteApt
 
 
 class MockSources:
@@ -115,6 +119,20 @@ class MockAptCaller:
         return self.work
 
 
+class MockAptCache:
+    def __init__(self, calls, watch_dir=None):
+        self.close_called_times = 0
+        self.dir_at_close = None
+        self._calls = calls
+        self._watch_dir = watch_dir
+
+    def close(self):
+        self.close_called_times += 1
+        self._calls.append("close")
+        if self._watch_dir is not None:
+            self.dir_at_close = os.path.isdir(self._watch_dir)
+
+
 class LocalAptTests(TestCase):
     def test_get_apt_command_for_source(self):
         self.assertEqual(
@@ -200,3 +218,29 @@ class LocalAptTests(TestCase):
             ],
             list(src.iter_source_by_name("apackage")),
         )
+
+
+class RemoteAptExitTests(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.remote = RemoteApt("http://example.com/debian", "sid", ["main"])
+
+    def make_rootdir(self):
+        rootdir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, rootdir, ignore_errors=True)
+        return rootdir
+
+    def test_closes_cache_before_rmtree(self):
+        # The cache holds fds into _rootdir, so it closes before the rmtree
+        calls = []
+        rootdir = self.make_rootdir()
+        self.remote._rootdir = rootdir
+        cache = MockAptCache(calls, watch_dir=rootdir)
+        self.remote.cache = cache
+
+        self.remote.__exit__(None, None, None)
+
+        self.assertEqual(["close"], calls)
+        self.assertIs(True, cache.dir_at_close)
+        self.assertFalse(os.path.isdir(rootdir))
+        self.assertIsNone(self.remote.cache)
