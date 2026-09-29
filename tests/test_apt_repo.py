@@ -244,3 +244,19 @@ class RemoteAptExitTests(TestCase):
         self.assertIs(True, cache.dir_at_close)
         self.assertFalse(os.path.isdir(rootdir))
         self.assertIsNone(self.remote.cache)
+
+    def test_exit_without_enter(self):
+        # breezyshim's RemoteApt::drop calls __exit__ blind
+        rootdir = self.make_rootdir()
+        self.remote._rootdir = rootdir
+
+        self.remote.__exit__(None, None, None)
+
+        self.assertFalse(os.path.isdir(rootdir))
+
+    def test_exit_without_rootdir(self):
+        self.assertIs(False, self.remote.__exit__(None, None, None))
+
+    def test_cache_is_none_before_enter(self):
+        self.assertIsNone(LocalApt().cache)
+        self.assertIsNone(RemoteApt("http://example.com/debian", "sid", ["main"]).cache)
