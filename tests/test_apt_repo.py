@@ -23,11 +23,15 @@ import shutil
 import tempfile
 
 from breezy.tests import TestCase
+from breezy.tests.features import ModuleAvailableFeature
 
 from debian.deb822 import Dsc
 
 
 from ..apt_repo import LocalApt, NoAptSources, RemoteApt
+
+
+AptFeature = ModuleAvailableFeature("apt")
 
 
 class MockSources:
@@ -120,12 +124,18 @@ class MockAptCaller:
 
 
 class MockAptCache:
-    def __init__(self, calls, close_error=None, watch_dir=None):
+    def __init__(self, calls, close_error=None, update_error=None, watch_dir=None):
         self.close_called_times = 0
         self.dir_at_close = None
         self._calls = calls
         self._close_error = close_error
+        self._update_error = update_error
         self._watch_dir = watch_dir
+
+    def update(self):
+        self._calls.append("update")
+        if self._update_error is not None:
+            raise self._update_error
 
     def close(self):
         self.close_called_times += 1
@@ -275,3 +285,52 @@ class RemoteAptExitTests(TestCase):
         self.assertEqual(["close"], calls)
         self.assertFalse(os.path.isdir(rootdir))
         self.assertIsNone(self.remote.cache)
+
+
+class RemoteAptEnterTests(TestCase):
+    def make_remote(self, **cache_kwargs):
+        self.requireFeature(AptFeature)
+        # apt.Cache would talk to mirror_uri
+        import apt
+        import apt_pkg
+
+        self.calls = []
+        self.rootdirs = []
+
+        def make_cache(rootdir=None):
+            self.rootdirs.append(rootdir)
+            return MockAptCache(self.calls, **cache_kwargs)
+
+        apt_pkg.init()
+        self.addCleanup(apt_pkg.config.set, "Dir", apt_pkg.config.find("Dir"))
+        self.addCleanup(
+            apt_pkg.config.set,
+            "APT::Sandbox::User",
+            apt_pkg.config.find("APT::Sandbox::User"),
+        )
+        self.overrideAttr(apt, "Cache", make_cache)
+        return RemoteApt("http://example.com/debian", "sid", ["main"])
+
+    def test_cleans_up_when_update_fails(self):
+        remote = self.make_remote(update_error=RuntimeError("mirror down"))
+
+        self.assertRaises(RuntimeError, remote.__enter__)
+
+        self.assertEqual(["update", "close"], self.calls)
+        self.assertIsNone(remote.cache)
+        self.assertIsNone(remote._rootdir)
+        self.assertFalse(os.path.isdir(self.rootdirs[0]))
+
+    def test_enter_error_survives_a_failing_close(self):
+        remote = self.make_remote(
+            update_error=RuntimeError("mirror down"),
+            close_error=RuntimeError("apt_pkg"),
+        )
+
+        e = self.assertRaises(RuntimeError, remote.__enter__)
+
+        self.assertEqual("mirror down", str(e))
+        self.assertEqual(["update", "close"], self.calls)
+        self.assertIsNone(remote.cache)
+        self.assertIsNone(remote._rootdir)
+        self.assertFalse(os.path.isdir(self.rootdirs[0]))
