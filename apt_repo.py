@@ -240,6 +240,7 @@ class RemoteApt(LocalApt):
     def _setup_rootdir(self):
         aptdir = os.path.join(self._rootdir, "etc", "apt")
         os.makedirs(aptdir)
+        os.makedirs(os.path.join(aptdir, "trusted.gpg.d"))
         if self.key_path:
             tag = "[signed-by=%s]" % self.key_path
         else:
