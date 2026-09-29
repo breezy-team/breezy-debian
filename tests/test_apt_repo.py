@@ -334,3 +334,13 @@ class RemoteAptEnterTests(TestCase):
         self.assertIsNone(remote.cache)
         self.assertIsNone(remote._rootdir)
         self.assertFalse(os.path.isdir(self.rootdirs[0]))
+
+    def test_creates_trusted_gpg_d(self):
+        remote = self.make_remote()
+
+        with remote:
+            self.assertTrue(
+                os.path.isdir(
+                    os.path.join(self.rootdirs[0], "etc", "apt", "trusted.gpg.d")
+                )
+            )
