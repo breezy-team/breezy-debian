@@ -230,6 +230,14 @@ class RemoteApt(LocalApt):
 
     def __enter__(self):
         self._rootdir = tempfile.mkdtemp()
+        try:
+            self._setup_rootdir()
+        except BaseException:
+            self._release()
+            raise
+        return self
+
+    def _setup_rootdir(self):
         aptdir = os.path.join(self._rootdir, "etc", "apt")
         os.makedirs(aptdir)
         if self.key_path:
@@ -263,7 +271,6 @@ class RemoteApt(LocalApt):
             raise _convert_apt_pkg_error(e) from e
         self._set_dir()
         self.cache.update()
-        return self
 
     def _set_dir(self):
         try:
@@ -274,7 +281,7 @@ class RemoteApt(LocalApt):
             self.apt_pkg.config.set("APT::Sandbox::User", username)
         self.apt_pkg.config.set("Dir", self._rootdir)
 
-    def __exit__(self, exc_tp, exc_val, exc_tb):
+    def _release(self):
         # Release apt's fds before removing the tree
         cache = self.cache
         self.cache = None
@@ -284,6 +291,10 @@ class RemoteApt(LocalApt):
         finally:
             if self._rootdir is not None:
                 shutil.rmtree(self._rootdir)
+                self._rootdir = None
+
+    def __exit__(self, exc_tp, exc_val, exc_tb):
+        self._release()
         return False
 
     @classmethod
