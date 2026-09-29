@@ -278,10 +278,12 @@ class RemoteApt(LocalApt):
         # Release apt's fds before removing the tree
         cache = self.cache
         self.cache = None
-        if cache is not None:
-            cache.close()
-        if self._rootdir is not None:
-            shutil.rmtree(self._rootdir)
+        try:
+            if cache is not None:
+                cache.close()
+        finally:
+            if self._rootdir is not None:
+                shutil.rmtree(self._rootdir)
         return False
 
     @classmethod

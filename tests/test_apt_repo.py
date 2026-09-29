@@ -120,10 +120,11 @@ class MockAptCaller:
 
 
 class MockAptCache:
-    def __init__(self, calls, watch_dir=None):
+    def __init__(self, calls, close_error=None, watch_dir=None):
         self.close_called_times = 0
         self.dir_at_close = None
         self._calls = calls
+        self._close_error = close_error
         self._watch_dir = watch_dir
 
     def close(self):
@@ -131,6 +132,8 @@ class MockAptCache:
         self._calls.append("close")
         if self._watch_dir is not None:
             self.dir_at_close = os.path.isdir(self._watch_dir)
+        if self._close_error is not None:
+            raise self._close_error
 
 
 class LocalAptTests(TestCase):
@@ -260,3 +263,15 @@ class RemoteAptExitTests(TestCase):
     def test_cache_is_none_before_enter(self):
         self.assertIsNone(LocalApt().cache)
         self.assertIsNone(RemoteApt("http://example.com/debian", "sid", ["main"]).cache)
+
+    def test_removes_rootdir_when_close_raises(self):
+        calls = []
+        rootdir = self.make_rootdir()
+        self.remote._rootdir = rootdir
+        self.remote.cache = MockAptCache(calls, close_error=RuntimeError("apt_pkg"))
+
+        self.assertRaises(RuntimeError, self.remote.__exit__, None, None, None)
+
+        self.assertEqual(["close"], calls)
+        self.assertFalse(os.path.isdir(rootdir))
+        self.assertIsNone(self.remote.cache)
