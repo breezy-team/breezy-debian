@@ -34,7 +34,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -U pip "setuptools>=60" cython breezy
           python -m pip install -U pip coverage codecov cython testscenarios testtools
-          python -m pip install ".[dev,paramiko,doc,launchpad,git]"
+          python -m pip install ".[launchpad]"
       - name: Set BRZ_PLUGINS_AT
         run: |
           echo BRZ_PLUGINS_AT=debian@$(pwd) > $GITHUB_ENV
