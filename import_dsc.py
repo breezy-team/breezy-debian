@@ -863,7 +863,30 @@ class DistributionBranch:
         )
         other_branches = self.get_other_branches()
         ret = []
+        components = [tb[1] for tb in upstream_tarballs if tb[1] is not None]
+        in_tree = self.pristine_upstream_source.components_in_tree
+        if in_tree:
+            # The components are stored relative to the main tarball
+            upstream_tarballs = sorted(upstream_tarballs, key=lambda tb: bool(tb[1]))
+        main = None
         for tarball, component, md5 in upstream_tarballs:
+            if in_tree and component is not None:
+                if main is None:
+                    raise BzrError(
+                        "Unable to import component %s without a main tarball"
+                        % component
+                    )
+                pristine_tar_imported = (
+                    self.pristine_upstream_source.import_component_delta(
+                        main[1],
+                        component,
+                        tarball,
+                        force_pristine_tar=force_pristine_tar,
+                        committer=committer,
+                    )
+                )
+                ret.append((component, *main, pristine_tar_imported, component))
+                continue
             parents = upstream_parents.get(component, [])
             if upstream_revisions is not None:
                 revid, subpath = upstream_revisions[component]
@@ -925,8 +948,8 @@ class DistributionBranch:
                 )
             finally:
                 self_tree.unlock()
-            if component is None:
-                exclude = [tb[1] for tb in upstream_tarballs if tb[1] is not None]
+            if component is None and not in_tree:
+                exclude = components
             else:
                 exclude = []
             (tag, revid, pristine_tar_imported) = (
@@ -945,12 +968,14 @@ class DistributionBranch:
                     committer=committer,
                     files_excluded=files_excluded,
                     reuse_existing=True,
+                    components=components if in_tree else None,
                 )
             )
             self.pristine_upstream_branch.generate_revision_history(revid)
             ret.append((component, tag, revid, pristine_tar_imported, subpath))
             self.branch.fetch(self.pristine_upstream_branch)
             self.branch.tags.set_tag(tag, revid)
+            main = (tag, revid)
         return ret
 
     def import_upstream_tarballs(
