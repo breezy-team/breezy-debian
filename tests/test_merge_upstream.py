@@ -27,6 +27,37 @@ from ....tests import (
 from ..merge_upstream import (
     changelog_add_new_version,
 )
+from ..merge_upstream import fetch_tarball
+
+
+class FetchTarballTests(TestCaseWithTransport):
+    def test_component(self):
+        self.build_tree_contents(
+            [
+                ("in/",),
+                ("in/foo_1.0.orig.tar.gz", b"main"),
+                ("in/foo_1.0.orig-bar.tar.xz", b"bar"),
+            ]
+        )
+        self.assertEqual(
+            ["orig/foo_1.0.orig.tar.gz", "orig/foo_1.0.orig-bar.tar.xz"],
+            fetch_tarball(
+                "foo",
+                "1.0",
+                "orig",
+                ["in/foo_1.0.orig.tar.gz", "in/foo_1.0.orig-bar.tar.xz"],
+                True,
+            ),
+        )
+        self.assertFileEqual(b"main", "orig/foo_1.0.orig.tar.gz")
+        self.assertFileEqual(b"bar", "orig/foo_1.0.orig-bar.tar.xz")
+
+    def test_other_name(self):
+        self.build_tree_contents([("in/",), ("in/foo-1.0.tar.gz", b"main")])
+        self.assertEqual(
+            ["orig/foo_1.0.orig.tar.gz"],
+            fetch_tarball("foo", "1.0", "orig", ["in/foo-1.0.tar.gz"], True),
+        )
 
 
 class ChangelogAddNewVersionTests(TestCaseWithTransport):
