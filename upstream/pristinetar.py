@@ -1069,6 +1069,8 @@ class GitPristineTarSource(BasePristineTarSource):
             )
             return dest_filename
         else:
+            if component is None:
+                self._recreate_main_tree(package, version, delta_id)
             dest_filename = os.path.join(target_dir, dest_filename)
             try:
                 subprocess.check_call(
@@ -1078,6 +1080,38 @@ class GitPristineTarSource(BasePristineTarSource):
             except subprocess.CalledProcessError as e:
                 raise PristineTarError(str(e)) from e
             return dest_filename
+
+    def _recreate_main_tree(self, package, version, delta_id):
+        """Recreate the tree of the main tarball if it has components.
+
+        gbp commits the upstream tree with the components unpacked in it.
+        The tree of the main tarball alone is only named by the pristine-tar
+        data, so it is missing from a fresh clone.
+        """
+        from dulwich.objects import Tree
+
+        tree_id = delta_id.strip()
+        components = [
+            c
+            for c in self._components_by_pristine_tar(package).get(version, {})
+            if c is not None
+        ]
+        if not components:
+            return
+        try:
+            revid, subpath = self.version_component_as_revision(package, version, None)
+        except PackageVersionNotPresent:
+            return
+        rev_tree = self.branch.repository.revision_tree(revid)
+        store = rev_tree.store
+        if tree_id in store:
+            return
+        main_tree = Tree()
+        for entry in store[rev_tree.tree].iteritems():
+            if entry.path.decode("utf-8", "replace") not in components:
+                main_tree.add(entry.path, entry.mode, entry.sha)
+        if main_tree.id == tree_id:
+            store.add_object(main_tree)
 
     def _components_by_pristine_tar(self, package=None):
         ret = {}
