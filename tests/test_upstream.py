@@ -1188,6 +1188,24 @@ upstream-tag = blah-%(version%~%-)s
         self.source = GitPristineTarSource.from_tree(self.tree)
         self.assertEqual(self.source.tag_name("0.1~1"), "blah-0.1_1")
 
+    def test_from_tree_without_tree(self):
+        self.build_tree_contents(
+            [
+                ("unstable/debian/",),
+                (
+                    "unstable/debian/gbp.conf",
+                    """\
+[DEFAULT]
+upstream-tag = blah-%(version)s
+""",
+                ),
+            ]
+        )
+        self.tree.add(["debian", "debian/gbp.conf"])
+        self.tree.commit("gbp.conf")
+        self.source = GitPristineTarSource.from_tree(None, self.tree.branch)
+        self.assertEqual(self.source.tag_name("0.1"), "blah-0.1")
+
     def test_upstream_tag_name(self):
         upstream_v_no = "0.1"
         self.assertEqual(
