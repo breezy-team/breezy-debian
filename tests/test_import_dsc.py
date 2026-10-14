@@ -1251,6 +1251,26 @@ class DistributionBranchTests(BuilddebTestCase):
         self.assertEqual(props["authors"], "Maint <maint@maint.org>\nOther Maint")
         self.assertEqual(props["deb-thanks"], "Bar\nFoo <foo@foo.org>")
 
+    def test_import_package_gbp_conf_upstream_branch(self):
+        self.requireFeature(PristineTarFeature)
+        tree = self.make_branch_and_tree("work", format="git")
+        db = DistributionBranch(tree.branch, tree.branch, tree=tree)
+        DistributionBranchSet().add_branch(db)
+        db.create_empty_upstream_tree(self.test_dir)
+        builder = SourcePackageBuilder("package", Version("0.1-1"))
+        builder.add_upstream_file("README", "foo")
+        builder.add_debian_file(
+            "debian/gbp.conf", "[DEFAULT]\nupstream-branch = upstream/latest\n"
+        )
+        builder.add_default_control()
+        builder.build()
+        db.import_package(builder.dsc_name())
+        self.assertEqual(
+            tree.branch.tags.lookup_tag("upstream/0.1"),
+            tree.controldir.open_branch("upstream/latest").last_revision(),
+        )
+        self.assertIs(tree.branch, db.pristine_upstream_source.packaging_branch)
+
     def test_import_two_roots(self):
         self.requireFeature(PristineTarFeature)
         version1 = Version("0.1-0ubuntu1")
