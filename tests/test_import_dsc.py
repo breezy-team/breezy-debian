@@ -41,6 +41,7 @@ from ..import_dsc import (
     DistributionBranchSet,
     get_changelog_from_source,
 )
+from ..merge_upstream import do_import
 from ..upstream.pristinetar import (
     PristineTarDeltaTooLarge,
 )
@@ -1006,6 +1007,33 @@ class DistributionBranchTests(BuilddebTestCase):
         self.check_changes(
             changes, added=["NEWS"], removed=["COPYING"], modified=["README"]
         )
+
+    def test_do_import_on_previous_upstream(self):
+        self.requireFeature(PristineTarFeature)
+        self.build_tree_contents([("unstable/README", "Hi\n")])
+        self.tree1.add(["README"])
+        old_revid = self.tree1.commit("Import upstream version 0.1")
+        self.tree1.branch.tags.set_tag("upstream-0.1", old_revid)
+        self.build_tree_contents(
+            [("package-0.2/",), ("package-0.2/README", "Now even better\n")]
+        )
+        with tarfile.open("package_0.2.orig.tar.gz", "w:gz") as tf:
+            tf.add("package-0.2")
+        with self.tree1.lock_write():
+            [(_, tag, revid, _, _)] = do_import(
+                self.tree1,
+                "",
+                [os.path.abspath("package_0.2.orig.tar.gz")],
+                "package",
+                "0.2",
+                "0.1",
+                None,
+                None,
+            )
+        self.assertEqual("upstream-0.2", tag)
+        rev = self.tree1.branch.repository.get_revision(revid)
+        self.assertEqual([old_revid], rev.parent_ids)
+        self.assertEqual(revid, self.tree1.branch.tags.lookup_tag("upstream-0.2"))
 
     def test_import_upstream_with_tarball(self):
         self.requireFeature(PristineTarFeature)
