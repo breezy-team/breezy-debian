@@ -142,7 +142,7 @@ def do_import(
 
         parents = {None: []}
         if db.pristine_upstream_branch.last_revision() != NULL_REVISION:
-            parents = {None: [db.pristine_upstream_branch.last_revision()]}
+            parents = {None: [(db.pristine_upstream_branch.last_revision(), "")]}
 
         return db.import_upstream_tarballs(
             tarballs,
