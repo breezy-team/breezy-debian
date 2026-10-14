@@ -764,6 +764,12 @@ class GitPristineTarSource(BasePristineTarSource):
 
     @classmethod
     def from_tree(cls, tree, packaging_branch=None):
+        if tree is None:
+            # No working tree: read gbp.conf from the branch tip.
+            controldir = packaging_branch.controldir
+            tree = packaging_branch.basis_tree()
+        else:
+            controldir = tree.controldir
         if tree and tree.has_filename("debian/gbp.conf"):
             parser = configparser.ConfigParser(
                 defaults={
@@ -797,9 +803,9 @@ class GitPristineTarSource(BasePristineTarSource):
             upstream_branch = "upstream"
             pristine_tar = None
         try:
-            branch = tree.controldir.open_branch(upstream_branch)
+            branch = controldir.open_branch(upstream_branch)
         except NotBranchError:
-            branch = tree.controldir.create_branch(upstream_branch)
+            branch = controldir.create_branch(upstream_branch)
         return cls(
             branch, gbp_tag_format, pristine_tar, packaging_branch=packaging_branch
         )
