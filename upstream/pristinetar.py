@@ -763,8 +763,10 @@ class GitPristineTarSource(BasePristineTarSource):
         return "<{} at {}>".format(self.__class__.__name__, self.branch.base)
 
     @classmethod
-    def from_tree(cls, tree, packaging_branch=None):
-        if tree and tree.has_filename("debian/gbp.conf"):
+    def from_tree(cls, tree, packaging_branch=None, gbp_conf=None):
+        if gbp_conf is None and tree and tree.has_filename("debian/gbp.conf"):
+            gbp_conf = tree.get_file_text("debian/gbp.conf")
+        if gbp_conf is not None:
             parser = configparser.ConfigParser(
                 defaults={
                     "pristine-tar": "false",
@@ -774,8 +776,7 @@ class GitPristineTarSource(BasePristineTarSource):
                 strict=False,
             )
             parser.read_string(
-                tree.get_file_text("debian/gbp.conf").decode("utf-8", errors="replace"),
-                "debian/gbp.conf",
+                gbp_conf.decode("utf-8", errors="replace"), "debian/gbp.conf"
             )
             try:
                 gbp_tag_format = parser.get("import-orig", "upstream-tag", raw=True)
