@@ -18,12 +18,20 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 
+import os
+import shutil
+import tempfile
+
 from breezy.tests import TestCase
+from breezy.tests.features import ModuleAvailableFeature
 
 from debian.deb822 import Dsc
 
 
-from ..apt_repo import LocalApt, NoAptSources
+from ..apt_repo import LocalApt, NoAptSources, RemoteApt
+
+
+AptFeature = ModuleAvailableFeature("apt")
 
 
 class MockSources:
@@ -115,6 +123,29 @@ class MockAptCaller:
         return self.work
 
 
+class MockAptCache:
+    def __init__(self, calls, close_error=None, update_error=None, watch_dir=None):
+        self.close_called_times = 0
+        self.dir_at_close = None
+        self._calls = calls
+        self._close_error = close_error
+        self._update_error = update_error
+        self._watch_dir = watch_dir
+
+    def update(self):
+        self._calls.append("update")
+        if self._update_error is not None:
+            raise self._update_error
+
+    def close(self):
+        self.close_called_times += 1
+        self._calls.append("close")
+        if self._watch_dir is not None:
+            self.dir_at_close = os.path.isdir(self._watch_dir)
+        if self._close_error is not None:
+            raise self._close_error
+
+
 class LocalAptTests(TestCase):
     def test_get_apt_command_for_source(self):
         self.assertEqual(
@@ -200,3 +231,116 @@ class LocalAptTests(TestCase):
             ],
             list(src.iter_source_by_name("apackage")),
         )
+
+
+class RemoteAptExitTests(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.remote = RemoteApt("http://example.com/debian", "sid", ["main"])
+
+    def make_rootdir(self):
+        rootdir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, rootdir, ignore_errors=True)
+        return rootdir
+
+    def test_closes_cache_before_rmtree(self):
+        # The cache holds fds into _rootdir, so it closes before the rmtree
+        calls = []
+        rootdir = self.make_rootdir()
+        self.remote._rootdir = rootdir
+        cache = MockAptCache(calls, watch_dir=rootdir)
+        self.remote.cache = cache
+
+        self.remote.__exit__(None, None, None)
+
+        self.assertEqual(["close"], calls)
+        self.assertIs(True, cache.dir_at_close)
+        self.assertFalse(os.path.isdir(rootdir))
+        self.assertIsNone(self.remote.cache)
+
+    def test_exit_without_enter(self):
+        # breezyshim's RemoteApt::drop calls __exit__ blind
+        rootdir = self.make_rootdir()
+        self.remote._rootdir = rootdir
+
+        self.remote.__exit__(None, None, None)
+
+        self.assertFalse(os.path.isdir(rootdir))
+
+    def test_exit_without_rootdir(self):
+        self.assertIs(False, self.remote.__exit__(None, None, None))
+
+    def test_cache_is_none_before_enter(self):
+        self.assertIsNone(LocalApt().cache)
+        self.assertIsNone(RemoteApt("http://example.com/debian", "sid", ["main"]).cache)
+
+    def test_removes_rootdir_when_close_raises(self):
+        calls = []
+        rootdir = self.make_rootdir()
+        self.remote._rootdir = rootdir
+        self.remote.cache = MockAptCache(calls, close_error=RuntimeError("apt_pkg"))
+
+        self.assertRaises(RuntimeError, self.remote.__exit__, None, None, None)
+
+        self.assertEqual(["close"], calls)
+        self.assertFalse(os.path.isdir(rootdir))
+        self.assertIsNone(self.remote.cache)
+
+
+class RemoteAptEnterTests(TestCase):
+    def make_remote(self, **cache_kwargs):
+        self.requireFeature(AptFeature)
+        # apt.Cache would talk to mirror_uri
+        import apt
+        import apt_pkg
+
+        self.calls = []
+        self.rootdirs = []
+
+        def make_cache(rootdir=None):
+            self.rootdirs.append(rootdir)
+            return MockAptCache(self.calls, **cache_kwargs)
+
+        apt_pkg.init()
+        self.addCleanup(apt_pkg.config.set, "Dir", apt_pkg.config.find("Dir"))
+        self.addCleanup(
+            apt_pkg.config.set,
+            "APT::Sandbox::User",
+            apt_pkg.config.find("APT::Sandbox::User"),
+        )
+        self.overrideAttr(apt, "Cache", make_cache)
+        return RemoteApt("http://example.com/debian", "sid", ["main"])
+
+    def test_cleans_up_when_update_fails(self):
+        remote = self.make_remote(update_error=RuntimeError("mirror down"))
+
+        self.assertRaises(RuntimeError, remote.__enter__)
+
+        self.assertEqual(["update", "close"], self.calls)
+        self.assertIsNone(remote.cache)
+        self.assertIsNone(remote._rootdir)
+        self.assertFalse(os.path.isdir(self.rootdirs[0]))
+
+    def test_enter_error_survives_a_failing_close(self):
+        remote = self.make_remote(
+            update_error=RuntimeError("mirror down"),
+            close_error=RuntimeError("apt_pkg"),
+        )
+
+        e = self.assertRaises(RuntimeError, remote.__enter__)
+
+        self.assertEqual("mirror down", str(e))
+        self.assertEqual(["update", "close"], self.calls)
+        self.assertIsNone(remote.cache)
+        self.assertIsNone(remote._rootdir)
+        self.assertFalse(os.path.isdir(self.rootdirs[0]))
+
+    def test_creates_trusted_gpg_d(self):
+        remote = self.make_remote()
+
+        with remote:
+            self.assertTrue(
+                os.path.isdir(
+                    os.path.join(self.rootdirs[0], "etc", "apt", "trusted.gpg.d")
+                )
+            )
