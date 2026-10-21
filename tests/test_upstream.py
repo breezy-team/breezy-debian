@@ -513,6 +513,16 @@ class UpstreamBranchSourceTests(TestCaseWithTransport):
         source = UpstreamBranchSource(self.tree.branch, {}, version_kind="release")
         self.assertEqual(("0.01_01", "0.0101"), source.get_latest_version("foo", None))
 
+    def test_get_version_after_untagged_tilde_version(self):
+        revid1 = self.tree.commit("msg")
+        self.tree.branch.tags.set_tag("1.9", revid1)
+        revid2 = self.tree.commit("msg")
+        source = UpstreamBranchSource(self.tree.branch)
+        self.assertEqual(
+            ("2.0~beta1+bzr2", "2.0~beta1+bzr2"),
+            source.get_version("foo", "2.0~beta1", revid2),
+        )
+
     def test_get_recent_versions(self):
         revid1 = self.tree.commit("msg")
         self.tree.branch.tags.set_tag("1.0", revid1)
@@ -915,6 +925,12 @@ class TestUpstreamVersionAddRevision(TestCaseWithTransport):
             "1.3+bzr42", upstream_version_add_revision(self, "1.3", b"somerev")
         )
 
+    def test_new_rev_sep(self):
+        self.assertEqual(
+            "1.3~bzr42",
+            upstream_version_add_revision(self, "1.3", b"somerev", sep="~"),
+        )
+
     def test_svn_new_rev(self):
         self.assertEqual(
             "1.3+svn45", upstream_version_add_revision(self, "1.3", b"somesvnrev")
@@ -963,6 +979,12 @@ class TestUpstreamVersionAddRevision(TestCaseWithTransport):
             upstream_version_add_revision(
                 self, "1.0~git20170101.0.11b1d57", b"somegitrev"
             ),
+        )
+
+    def test_git_new_rev_sep(self):
+        self.assertEqual(
+            "1.3~git20180101.1.e7f47cf",
+            upstream_version_add_revision(self, "1.3", b"somegitrev", sep="~"),
         )
 
 
