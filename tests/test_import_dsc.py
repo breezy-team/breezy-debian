@@ -20,6 +20,7 @@
 #
 
 import os
+import pathlib
 import shutil
 import tarfile
 
@@ -960,6 +961,14 @@ class DistributionBranchTests(BuilddebTestCase):
         tip = branch.last_revision()
         revtree = branch.repository.revision_tree(tip)
         self.assertNotEqual(None, revtree.path2id(".bzrignore"))
+
+    def test_extract_upstream_tree_path_subpath(self):
+        self.build_tree_contents([("unstable-upstream/README", "Hi\n")])
+        self.up_tree1.add(["README"])
+        revid = self.up_tree1.commit("upstream")
+        os.mkdir("extract")
+        self.db1.extract_upstream_tree({None: (revid, pathlib.Path(""))}, "extract")
+        self.assertPathExists("extract/upstream/README")
 
     def test_import_upstream_on_another(self):
         version1 = Version("0.1-1")
