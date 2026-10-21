@@ -21,6 +21,7 @@
 from contextlib import ExitStack
 from datetime import date
 import os
+import posixpath
 import re
 import subprocess
 import tempfile
@@ -455,7 +456,7 @@ class UpstreamBranchSource(UpstreamSource):
         self.upstream_revision_map = {}
         if subpath is None:
             subpath = ""
-        self.subpath = subpath
+        self.subpath = posixpath.normpath("/" + subpath).strip("/")
         if upstream_revision_map is not None:
             self.upstream_revision_map.update(upstream_revision_map.items())
 
@@ -499,6 +500,7 @@ class UpstreamBranchSource(UpstreamSource):
             actual_branch=actual_branch,
             create_dist=create_dist,
             version_kind=version_kind,
+            subpath=subpath,
         )
 
     def version_as_revision(
@@ -661,6 +663,8 @@ class UpstreamBranchSource(UpstreamSource):
                 rev_tree = None
             if rev_tree is None:
                 rev_tree = self.upstream_branch.repository.revision_tree(revid)
+            if subpath and not rev_tree.has_filename(subpath):
+                raise PackageVersionNotPresent(package, version, self)
             if self.create_dist is not None:
                 with tempfile.TemporaryDirectory() as td:
                     fn = self.create_dist(
