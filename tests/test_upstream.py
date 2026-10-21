@@ -602,6 +602,31 @@ class UpstreamBranchSourceTests(TestCaseWithTransport):
             PackageVersionNotPresent, source.version_as_revision, "foo", "2.1"
         )
 
+    def test_from_branch_subpath(self):
+        revid = self.tree.commit("msg")
+        self.tree.branch.tags.set_tag("1.0", revid)
+        source = UpstreamBranchSource.from_branch(self.tree.branch, subpath="sub")
+        self.assertEqual((revid, "sub"), source.version_as_revision("foo", "1.0"))
+
+    def test_from_branch_subpath_normalised(self):
+        for subpath, expected in [
+            (".", ""),
+            ("./sub", "sub"),
+            ("/sub", "sub"),
+            ("sub/", "sub"),
+        ]:
+            source = UpstreamBranchSource.from_branch(self.tree.branch, subpath=subpath)
+            self.assertEqual(expected, source.subpath)
+
+    def test_fetch_tarballs_missing_subpath(self):
+        self.tree.commit("msg")
+        self.tree.branch.tags.set_tag("1.0", self.tree.branch.last_revision())
+        source = UpstreamBranchSource.from_branch(self.tree.branch, subpath="sub")
+        os.mkdir("mydir")
+        self.assertRaises(
+            PackageVersionNotPresent, source.fetch_tarballs, "foo", "1.0", "mydir"
+        )
+
     def test_get_latest_version_no_random_access(self):
         local_repo = self.make_repository("local")
         self.tree.commit("msg")

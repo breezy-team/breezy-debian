@@ -588,6 +588,18 @@ def find_new_upstream(  # noqa: C901
             tree.branch, upstream_branch_source, package, old_upstream_version
         )
 
+    if (
+        include_upstream_history
+        and upstream_branch_source is not None
+        and upstream_branch_source.subpath
+    ):
+        logging.warning(
+            "Not including upstream history after all, since the upstream "
+            "branch location has a subpath (%s).",
+            upstream_branch_source.subpath,
+        )
+        include_upstream_history = False
+
     if include_upstream_history is False:
         upstream_branch_source = None
 
