@@ -218,6 +218,7 @@ class RemoteApt(LocalApt):
         self.key_path = key_path
         self.cache = None
         self._rootdir = None
+        self._entered = 0
 
     def __repr__(self):
         return "{}({!r}, distribution={!r}, components={!r}, key_path={!r})".format(
@@ -229,12 +230,17 @@ class RemoteApt(LocalApt):
         )
 
     def __enter__(self):
+        if self._entered:
+            # Nested use (e.g. check_up_to_date) keeps the existing root
+            self._entered += 1
+            return self
         self._rootdir = tempfile.mkdtemp()
         try:
             self._setup_rootdir()
         except BaseException:
             self._release()
             raise
+        self._entered = 1
         return self
 
     def _setup_rootdir(self):
@@ -295,6 +301,10 @@ class RemoteApt(LocalApt):
                 self._rootdir = None
 
     def __exit__(self, exc_tp, exc_val, exc_tb):
+        if self._entered > 1:
+            self._entered -= 1
+            return False
+        self._entered = 0
         self._release()
         return False
 
