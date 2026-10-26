@@ -335,6 +335,19 @@ class RemoteAptEnterTests(TestCase):
         self.assertIsNone(remote._rootdir)
         self.assertFalse(os.path.isdir(self.rootdirs[0]))
 
+    def test_nested_enter_keeps_one_rootdir(self):
+        # breezyshim enters on creation, then check_up_to_date enters again
+        remote = self.make_remote()
+
+        with remote:
+            with remote:
+                pass
+            self.assertTrue(os.path.isdir(self.rootdirs[0]))
+
+        self.assertEqual(["update", "close"], self.calls)
+        self.assertEqual(1, len(self.rootdirs))
+        self.assertFalse(os.path.isdir(self.rootdirs[0]))
+
     def test_creates_trusted_gpg_d(self):
         remote = self.make_remote()
 
