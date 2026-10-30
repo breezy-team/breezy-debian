@@ -93,7 +93,9 @@ class UpstreamBranchAlreadyMerged(BzrError):
 class UpstreamAlreadyImported(BzrError):
     _fmt = 'Upstream version "%(version)s" has already been imported (tag: %(tag)s).'
 
-    def __init__(self, version, tag):
+    def __init__(self, version, tag=None):
+        if tag is None:
+            self._fmt = 'Upstream version "%(version)s" has already been imported.'
         BzrError.__init__(self, version=str(version), tag=tag)
 
 
