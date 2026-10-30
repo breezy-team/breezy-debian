@@ -74,15 +74,10 @@ def check_up_to_date(tree: Tree, subpath: str, apt: Apt) -> None:
         try:
             released_tree_versions.append(block.version)
         except ValueError:
-            # If the version is invalid, then hopefully it's safe
-            # to assume it's not in the archive
-            with apt:
-                last_archive_version = max(
-                    entry["Version"]
-                    for entry in apt.iter_source_by_name(tree_cl.package)
-                )
-
-            raise TreeVersionNotInArchive(block._raw_version, None)
+            if not released_tree_versions:
+                raise
+            # Older entries with invalid versions can not be in the archive
+            continue
 
     package = tree_cl.package
 
