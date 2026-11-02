@@ -31,6 +31,22 @@ Standards-Version: 4.5.0
 
 Package: brz-debian
 Architecture: all
+Depends: python3-breezy-debian (= ${binary:Version}),
+         ${misc:Depends},
+         ${python3:Depends}
+Provides: brz-buildpackage
+Breaks: silver-platter (<= 0.1.0)
+Enhances: brz
+Description: breezy plugin for Debian package management
+ brz-debian is a plugin for the breezy version control system that helps to
+ automate the task of maintaining Debian packages using breezy. It is similar
+ in intent to cvs-buildpackage, svn-buildpackage and the similar scripts.
+ .
+ It builds a Debian package from a branch, optionally using a separate
+ upstream tarball.
+
+Package: python3-breezy-debian
+Architecture: all
 Depends: brz (>= 3.3~),
          devscripts (>= 2.10.59),
          dpkg-dev,
@@ -52,13 +68,11 @@ Recommends: libalgorithm-merge-perl,
             python3-launchpadlib,
             python3-upstream-ontologist
 Suggests: debcargo
-Provides: brz-buildpackage
-Breaks: silver-platter (<= 0.1.0)
-Enhances: brz
-Description: breezy plugin for Debian package management
- brz-debian is a plugin for the breezy version control system that helps to
- automate the task of maintaining Debian packages using breezy. It is similar
- in intent to cvs-buildpackage, svn-buildpackage and the similar scripts.
+Breaks: brz-debian (<< 2.8.82~)
+Replaces: brz-debian (<< 2.8.82~)
+Description: breezy plugin for Debian package management - Python module
+ This is a plugin for the breezy version control system that helps to
+ automate the task of maintaining Debian packages using breezy.
  .
- It builds a Debian package from a branch, optionally using a separate
- upstream tarball.
+ This package contains the plugin without the deb-* commands, which are in
+ brz-debian.
