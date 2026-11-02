@@ -162,6 +162,16 @@ class AddChangelogError(BzrError):
         BzrError.__init__(self, changelog=changelog)
 
 
+def normalize_subpath(subpath) -> str:
+    """Return subpath as a str, with "" for the root of the tree."""
+    if subpath is None:
+        return ""
+    subpath = os.fspath(subpath)
+    if subpath == ".":
+        return ""
+    return subpath
+
+
 def find_changelog(t, subpath="", merge=False, max_blocks=1, strict=False):
     """Find the changelog in the given tree.
 
@@ -186,6 +196,7 @@ def find_changelog(t, subpath="", merge=False, max_blocks=1, strict=False):
         located at 'changelog' (rather than 'debian/changelog') if
         merge was given, False otherwise.
     """
+    subpath = normalize_subpath(subpath)
     top_level = False
     with t.lock_read():
         changelog_file = osutils.pathjoin(subpath, "debian/changelog")
@@ -505,8 +516,7 @@ def debuild_config(tree, subpath):
     """
     config_files = []
     user_config = None
-    if subpath in (".", None):
-        subpath = ""
+    subpath = normalize_subpath(subpath)
     new_local_conf = osutils.pathjoin(subpath, NEW_LOCAL_CONF)
     local_conf = osutils.pathjoin(subpath, LOCAL_CONF)
     new_conf = osutils.pathjoin(subpath, NEW_CONF)

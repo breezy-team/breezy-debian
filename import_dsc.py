@@ -68,6 +68,7 @@ from .util import (
     extract_orig_tarball,
     get_commit_info_from_changelog,
     md5sum_filename,
+    normalize_subpath,
     open_file_via_transport,
     open_transport,
 )
@@ -867,6 +868,7 @@ class DistributionBranch:
             parents = upstream_parents.get(component, [])
             if upstream_revisions is not None:
                 revid, subpath = upstream_revisions[component]
+                subpath = normalize_subpath(subpath)
             else:
                 revid = None
                 subpath = ""
@@ -1400,7 +1402,7 @@ class DistributionBranch:
             upstream_tips.keys()
         )
         # TODO(jelmer): Use colocated branches rather than creating a copy.
-        if upstream_tips[None][1]:
+        if normalize_subpath(upstream_tips[None][1]):
             raise Exception("subpaths are not yet supported")
         dir_to = source_branch.controldir.sprout(
             to_location, revision_id=upstream_tips[None][0], accelerator_tree=self.tree

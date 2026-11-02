@@ -22,6 +22,7 @@ import bz2
 import gzip
 import hashlib
 import os
+import pathlib
 import shutil
 import tarfile
 
@@ -225,6 +226,24 @@ bzr-builddeb (0.16.2) unstable; urgency=low
         os.mkdir("debian")
         self.write_changelog("debian/changelog")
         self.assertRaises(AddChangelogError, find_changelog, tree, merge=False)
+
+    def test_find_changelog_path_subpath(self):
+        tree = self.make_branch_and_tree(".")
+        os.mkdir("debian")
+        self.write_changelog("debian/changelog")
+        tree.add(["debian", "debian/changelog"])
+        (cl, lq) = find_changelog(tree, subpath=pathlib.Path(""), merge=False)
+        self.assertEqual(str(cl), cl_block1)
+        self.assertEqual(lq, False)
+
+    def test_find_changelog_none_subpath(self):
+        tree = self.make_branch_and_tree(".")
+        os.mkdir("debian")
+        self.write_changelog("debian/changelog")
+        tree.add(["debian", "debian/changelog"])
+        (cl, lq) = find_changelog(tree, subpath=None, merge=False)
+        self.assertEqual(str(cl), cl_block1)
+        self.assertEqual(lq, False)
 
 
 class TarballNameTests(TestCase):

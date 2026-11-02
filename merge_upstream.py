@@ -121,6 +121,9 @@ def do_import(
       list with (component, tag, revid, pristine_tar_imported, subpath)
       tuples
     """
+    tarball_filenames = [os.fspath(p) for p in tarball_filenames]
+    if files_excluded is not None:
+        files_excluded = [os.fspath(f) for f in files_excluded]
     db = DistributionBranch(tree.branch, tree.branch, tree=tree)
     dbs = DistributionBranchSet()
     dbs.add_branch(db)
@@ -211,6 +214,7 @@ def fetch_tarball(package, version, orig_dir, locations, v3):
     ret = []
     format = None
     for location in locations:
+        location = os.fspath(location)
         if v3:
             if location.endswith(".tar.bz2") or location.endswith(".tbz2"):
                 format = "bz2"
