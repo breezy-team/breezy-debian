@@ -78,6 +78,7 @@ from .upstream.branch import (
     PreviousVersionTagMissing,
 )
 from .upstream.pristinetar import (
+    GitPristineTarSource,
     get_pristine_tar_source,
 )
 
@@ -1318,6 +1319,24 @@ class DistributionBranch:
                 file_ids_from=file_ids_from,
             )
 
+    def _use_source_gbp_conf(self, debian_part):
+        """Take the upstream branch from the gbp.conf of a first import."""
+        if (
+            self.tree is None
+            or not isinstance(self.pristine_upstream_source, GitPristineTarSource)
+            or self.tree.has_filename("debian/gbp.conf")
+            or self.pristine_upstream_source.branch.last_revision() != NULL_REVISION
+        ):
+            return
+        try:
+            with open(os.path.join(debian_part, "debian", "gbp.conf"), "rb") as f:
+                gbp_conf = f.read()
+        except FileNotFoundError:
+            return
+        self.pristine_upstream_source = GitPristineTarSource.from_tree(
+            self.tree, self.pristine_upstream_source.packaging_branch, gbp_conf=gbp_conf
+        )
+
     def import_package(
         self,
         dsc_filename: str,
@@ -1358,6 +1377,7 @@ class DistributionBranch:
                 raise VersionAlreadyImported(
                     version, tag_name=self.tag_of_version(version)
                 )
+            self._use_source_gbp_conf(extractor.extracted_debianised)
             # TODO: check that the versions list is correctly ordered,
             # as some methods assume that, and it's not clear what
             # should happen if it isn't.
