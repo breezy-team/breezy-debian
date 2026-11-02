@@ -870,8 +870,6 @@ class DistributionBranch:
             else:
                 revid = None
                 subpath = ""
-            if subpath:
-                raise Exception("subpaths are not yet supported")
             upstream_trees = [
                 o.pristine_upstream_branch.basis_tree() for o in other_branches
             ]
@@ -922,6 +920,7 @@ class DistributionBranch:
                     path,
                     file_ids_from=[self_tree] + upstream_trees,
                     target_tree=target_tree,
+                    target_subpath=subpath,
                 )
             finally:
                 self_tree.unlock()
@@ -948,7 +947,7 @@ class DistributionBranch:
                 )
             )
             self.pristine_upstream_branch.generate_revision_history(revid)
-            ret.append((component, tag, revid, pristine_tar_imported, subpath))
+            ret.append((component, tag, revid, pristine_tar_imported, ""))
             self.branch.fetch(self.pristine_upstream_branch)
             self.branch.tags.set_tag(tag, revid)
         return ret
