@@ -209,14 +209,18 @@ def do_merge(
 
 def fetch_tarball(package, version, orig_dir, locations, v3):
     ret = []
-    format = None
     for location in locations:
+        format = None
         if v3:
             if location.endswith(".tar.bz2") or location.endswith(".tbz2"):
                 format = "bz2"
             elif location.endswith(".tar.xz"):
                 format = "xz"
-        dest_name = tarball_name(package, version, None, format=format)
+        try:
+            component = component_from_orig_tarball(location, package, version)
+        except ValueError:
+            component = None
+        dest_name = tarball_name(package, version, component, format=format)
         tarball_filename = os.path.join(orig_dir, dest_name)
         repack_tarball(location, dest_name, target_dir=orig_dir)
         ret.append(tarball_filename)

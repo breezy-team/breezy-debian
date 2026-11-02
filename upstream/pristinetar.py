@@ -30,6 +30,7 @@ import errno
 from io import BytesIO
 import os
 import re
+import stat
 import subprocess
 from tarfile import TarFile
 import tempfile
@@ -127,6 +128,26 @@ def git_store_pristine_tar(branch, filename, tree_id, delta, force=False):
             "Add pristine tar data for %s" % filename, reporter=NullCommitReporter()
         )
         mutter("Added pristine tar data for %s: %s", filename, revid)
+
+
+def git_tree_without(store, target_store, tree_id, names):
+    """Store a copy of a git tree without some top-level directories.
+
+    :param store: Object store to read the tree from
+    :param target_store: Object store to add the new tree to
+    :param tree_id: Id of the tree
+    :param names: Names of the directories to leave out
+    :return: Id of the new tree
+    """
+    from dulwich.objects import Tree
+
+    names = [osutils.safe_utf8(name) for name in names]
+    ret = Tree()
+    for entry in store[tree_id].iteritems():
+        if not (entry.path in names and stat.S_ISDIR(entry.mode)):
+            ret.add(entry.path, entry.mode, entry.sha)
+    target_store.add_object(ret)
+    return ret.id
 
 
 def reconstruct_pristine_tar(dest, delta, dest_filename):
@@ -293,6 +314,9 @@ def revision_pristine_tar_format(rev):
 
 class BasePristineTarSource(UpstreamSource):
     branch: Branch
+
+    # Whether component tarballs live in subdirectories of the main import
+    components_in_tree = False
 
     def _has_revision(self, revid, md5):
         raise NotImplementedError(self._has_revision)
@@ -490,6 +514,7 @@ class BzrPristineTarSource(BasePristineTarSource):
         committer=None,
         files_excluded=None,
         reuse_existing=True,
+        components=None,
     ):
         """Import a tarball.
 
@@ -751,6 +776,9 @@ class PristineTarDelta:
 class GitPristineTarSource(BasePristineTarSource):
     SUFFIXES = ["tar.gz", "tar.lzma", "tar.xz", "tar.bz2"]
 
+    # The layout of gbp: one commit and one tag for all tarballs of a version
+    components_in_tree = True
+
     def __init__(
         self, branch, gbp_tag_format=None, pristine_tar=None, packaging_branch=None
     ):
@@ -842,6 +870,7 @@ class GitPristineTarSource(BasePristineTarSource):
         committer=None,
         files_excluded=None,
         reuse_existing=True,
+        components=None,
     ):
         """Import a tarball.
 
@@ -850,6 +879,8 @@ class GitPristineTarSource(BasePristineTarSource):
         :param parent_ids: Dictionary mapping component names to revision ids
         :param component: Component name (None for base)
         :param exclude: Exclude directories
+        :param components: Names of the components that are unpacked in
+            subdirectories of the tree and belong to this import
         :param force_pristine_tar: Whether to force creating a pristine-tar
             branch if one does not exist.
         :param committer: Committer identity to use
@@ -928,6 +959,65 @@ class GitPristineTarSource(BasePristineTarSource):
                 builder.commit("Merge %s." % version)
 
         tree_id = revtree._lookup_path("")[2]
+        if components:
+            # The main tarball does not hold the component directories
+            tree_id = git_tree_without(
+                revtree.store,
+                self.branch.repository._git.object_store,
+                tree_id,
+                components,
+            )
+        if committer is None:
+            cs = tree.branch.get_config_stack()
+            committer = cs.get("email")
+        pristine_tar_imported = self._commit_pristine_tar(
+            tarball, tree_id, force_pristine_tar, committer, reuse_existing
+        )
+        mutter(
+            "imported %s version %s component %r as revid %s, tagged %s",
+            package,
+            version,
+            component,
+            revid,
+            tag_name,
+        )
+        return tag_name, revid, pristine_tar_imported
+
+    def import_component_delta(
+        self,
+        revid,
+        component,
+        tarball,
+        force_pristine_tar=False,
+        committer=None,
+        reuse_existing=True,
+    ):
+        """Store the pristine-tar data of a component of an imported revision.
+
+        :param revid: Revision that holds the component in a subdirectory
+        :param component: Component name
+        :param tarball: Path of the component tarball
+        :return: Whether pristine-tar data was stored
+        """
+        revtree = self.branch.repository.revision_tree(revid)
+        try:
+            tree_id = revtree._lookup_path(component)[2]
+        except NoSuchFile:
+            tree_id = None
+        if tree_id is None:
+            raise PristineTarError(
+                "No directory %s for the component tarball %s"
+                % (component, os.path.basename(tarball))
+            )
+        if committer is None:
+            committer = self.branch.get_config_stack().get("email")
+        return self._commit_pristine_tar(
+            tarball, tree_id, force_pristine_tar, committer, reuse_existing
+        )
+
+    def _commit_pristine_tar(
+        self, tarball, tree_id, force_pristine_tar, committer, reuse_existing
+    ):
         try:
             pristine_tar_branch = self.branch.controldir.open_branch(
                 name="pristine-tar"
@@ -944,32 +1034,18 @@ class GitPristineTarSource(BasePristineTarSource):
                     "since there is no pristine-tar branch."
                 )
                 pristine_tar_branch = None
-        if pristine_tar_branch:
-            dest = self.branch.controldir.user_transport.local_abspath(".")
-            if committer is None:
-                cs = tree.branch.get_config_stack()
-                committer = cs.get("email")
-            try:
-                commit_pristine_tar(dest, tarball, tree_id, committer=committer)
-            except PristineTarDeltaExists:
-                if reuse_existing:
-                    note("Reusing existing tarball, since delta exists.")
-                    return tag_name, revid, True
-                raise
-            else:
-                note("Imported %s with pristine-tar.", os.path.basename(tarball))
-                pristine_tar_imported = True
-        else:
-            pristine_tar_imported = False
-        mutter(
-            "imported %s version %s component %r as revid %s, tagged %s",
-            package,
-            version,
-            component,
-            revid,
-            tag_name,
-        )
-        return tag_name, revid, pristine_tar_imported
+        if not pristine_tar_branch:
+            return False
+        dest = self.branch.controldir.user_transport.local_abspath(".")
+        try:
+            commit_pristine_tar(dest, tarball, tree_id, committer=committer)
+        except PristineTarDeltaExists:
+            if reuse_existing:
+                note("Reusing existing tarball, since delta exists.")
+                return True
+            raise
+        note("Imported %s with pristine-tar.", os.path.basename(tarball))
+        return True
 
     def fetch_component_tarball(self, package, version, component, target_dir):
         note("Using pristine-tar to reconstruct %s/%s.", package, version)

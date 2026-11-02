@@ -25,14 +25,14 @@ import shutil
 import sys
 import tempfile
 
-from debmutate.watch import parse_watch_file
+from debmutate.watch import MissingVersion, WatchSyntaxError, parse_watch_file
 
 from ....errors import BzrError
 from ....transport import NoSuchFile
 from .... import osutils
 from ....trace import note, warning
 from . import UpstreamSource, PackageVersionNotPresent
-from ..util import export_with_nested
+from ..util import component_from_orig_tarball, export_with_nested
 
 
 class UScanError(BzrError):
@@ -233,13 +233,23 @@ class UScanSource(UpstreamSource):
                 "--check-dirname-level=0",
                 "--download",
                 "--destdir=%s" % container,
-                "--download-debversion=%s" % version,
             ]
             if self.skip_signatures:
                 args.append("--skip-signature")
-            text, r = _run_dehs_uscan(args, cwd=container)
-            _xml_report_extract_errors(text)
-            orig_files = _xml_report_extract_target_paths(text)
+            wanted = _watch_file_components(os.path.join(container, "debian", "watch"))
+            for version_args in _version_args(version, wanted):
+                text, r = _run_dehs_uscan(args + version_args, cwd=container)
+                _xml_report_extract_errors(text)
+                orig_files = _xml_report_extract_target_paths(text)
+                missing = _missing_components(orig_files, package, version, wanted)
+                if not wanted or not missing:
+                    break
+            else:
+                _xml_report_print_warnings(text)
+                raise UScanError(
+                    "no tarball of version %s for: %s"
+                    % (version, ", ".join(c or "main" for c in missing))
+                )
             if not orig_files:
                 for w in _xml_report_extract_warnings(text):
                     m = re.match(
@@ -290,8 +300,48 @@ def _xml_report_extract_target_paths(text):
 
     return [
         unescape(m.group(1).decode())
-        for m in re.finditer(b"<target-path>(.*)</target-path>", text)
+        for m in re.finditer(
+            b"<(?:component-)?target-path>(.*)</(?:component-)?target-path>", text
+        )
     ]
+
+
+def _watch_file_components(path):
+    """Return the names of the components a watch file has entries for."""
+    try:
+        with open(path) as f:
+            wf = parse_watch_file(f)
+    except (FileNotFoundError, MissingVersion, WatchSyntaxError, ValueError):
+        # Left to uscan to report
+        note("Unable to parse the watch file, not checking for components.")
+        return []
+    if wf is None:
+        return []
+    return [
+        entry.get_option("component")
+        for entry in wf.entries
+        if entry.has_option("component")
+    ]
+
+
+def _version_args(version, components):
+    """Return the uscan version arguments to try, in order."""
+    debversion = ["--download-debversion=%s" % version]
+    if not components:
+        return [debversion]
+    # A component has its own version; no option gets the newest of each
+    return [[], debversion, ["--download-version=%s" % version]]
+
+
+def _missing_components(orig_files, package, version, components):
+    """Return the wanted components (None is the main one) without tarball."""
+    found = set()
+    for path in orig_files:
+        try:
+            found.add(component_from_orig_tarball(path, package, version))
+        except ValueError:
+            pass
+    return [c for c in [None, *components] if c not in found]
 
 
 def _run_dehs_uscan(args, cwd):
