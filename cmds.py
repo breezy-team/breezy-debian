@@ -1153,7 +1153,10 @@ class cmd_merge_upstream(Command):
                     )
                 upstream_revspec = revision[0]
                 upstream_revisions = {
-                    None: (upstream_revspec.as_revision_id(upstream_branch), subpath)
+                    None: (
+                        upstream_revspec.as_revision_id(upstream_branch),
+                        upstream_branch_source.subpath,
+                    )
                 }
             else:
                 upstream_revisions = None
