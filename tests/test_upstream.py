@@ -1321,6 +1321,152 @@ upstream-tag = blah-%(version%~%-)s
             )
         )
 
+    def make_pristine_tar_branch(self, names):
+        pt_tree = self.make_branch_and_tree("pristine-tar", format="git")
+        self.build_tree_contents([("pristine-tar/" + name, b"x") for name in names])
+        pt_tree.add(names)
+        pt_tree.commit("pristine-tar data")
+        self.tree.controldir.push_branch(pt_tree.branch, name="pristine-tar")
+
+    def test_components_by_pristine_tar(self):
+        self.make_pristine_tar_branch(
+            [
+                "pkg_2.1.orig.tar.gz.delta",
+                "pkg_2.1.orig.tar.gz.id",
+                "pkg_2.1.orig-ext-lib.tar.xz.delta",
+                "pkg_2.1.orig-ext-lib.tar.xz.id",
+                "pkg_2.0.orig.tar.bz2.delta",
+                "pkg_2.0.orig.tar.bz2.id",
+                "other_2.1.orig-data.tar.gz.delta",
+                "other_2.1.orig-data.tar.gz.id",
+            ]
+        )
+        self.assertEqual(
+            {
+                "2.1": {
+                    None: "pkg_2.1.orig.tar.gz",
+                    "ext-lib": "pkg_2.1.orig-ext-lib.tar.xz",
+                },
+                "2.0": {None: "pkg_2.0.orig.tar.bz2"},
+            },
+            self.source._components_by_pristine_tar("pkg"),
+        )
+
+    def test_get_pristine_tar_delta_component(self):
+        self.make_pristine_tar_branch(
+            [
+                "pkg_2.1.orig.tar.gz.delta",
+                "pkg_2.1.orig.tar.gz.id",
+                "pkg_2.1.orig-ext-lib.tar.xz.delta",
+                "pkg_2.1.orig-ext-lib.tar.xz.id",
+            ]
+        )
+        self.assertEqual(
+            "pkg_2.1.orig.tar.gz", self.source.get_pristine_tar_delta("pkg", "2.1")[0]
+        )
+        self.assertEqual(
+            "pkg_2.1.orig-ext-lib.tar.xz",
+            self.source.get_pristine_tar_delta("pkg", "2.1", "ext-lib")[0],
+        )
+
+    def test_fetch_tarballs_components_under_one_tag(self):
+        # gbp import-orig --component keeps a single tag per version
+        revid1 = self.tree.commit("msg")
+        self.tree.branch.tags.set_tag("upstream/2.1", revid1)
+        self.make_pristine_tar_branch(
+            [
+                "pkg_2.1.orig.tar.gz.delta",
+                "pkg_2.1.orig.tar.gz.id",
+                "pkg_2.1.orig-ext-lib.tar.xz.delta",
+                "pkg_2.1.orig-ext-lib.tar.xz.id",
+            ]
+        )
+        fetched = []
+
+        def fetch_component_tarball(package, version, component, target_dir):
+            fetched.append(component)
+            return component
+
+        self.source.fetch_component_tarball = fetch_component_tarball
+        self.source.fetch_tarballs("pkg", "2.1", "target")
+        self.assertEqual([None, "ext-lib"], fetched)
+
+    def test_fetch_tarballs_dropped_component(self):
+        # The delta of a component the packaging no longer ships is ignored
+        revid1 = self.tree.commit("msg")
+        self.tree.branch.tags.set_tag("upstream/2.1", revid1)
+        self.make_pristine_tar_branch(
+            [
+                "pkg_2.1.orig.tar.gz.delta",
+                "pkg_2.1.orig-ext-lib.tar.xz.delta",
+                "pkg_2.1.orig-gone.tar.xz.delta",
+            ]
+        )
+        self.build_tree(["unstable/ext-lib/", "unstable/ext-lib/a"])
+        self.tree.add(["ext-lib", "ext-lib/a"])
+        self.tree.commit("packaging")
+        self.source = GitPristineTarSource(
+            self.tree.branch, packaging_branch=self.tree.branch
+        )
+        fetched = []
+
+        def fetch_component_tarball(package, version, component, target_dir):
+            fetched.append(component)
+            return component
+
+        self.source.fetch_component_tarball = fetch_component_tarball
+        self.source.fetch_tarballs("pkg", "2.1", "target")
+        self.assertEqual([None, "ext-lib"], fetched)
+
+    def test_fetch_tarballs_component_delta_only(self):
+        # The main tarball is still asked for when only a component is known
+        self.make_pristine_tar_branch(["pkg_2.1.orig-ext-lib.tar.xz.delta"])
+        fetched = []
+
+        def fetch_component_tarball(package, version, component, target_dir):
+            fetched.append(component)
+            return component
+
+        self.source.fetch_component_tarball = fetch_component_tarball
+        self.source.fetch_tarballs("pkg", "2.1", "target")
+        self.assertEqual([None, "ext-lib"], fetched)
+
+    def test_recreate_main_tree(self):
+        from dulwich.objects import Tree
+
+        self.build_tree(["unstable/a", "unstable/ext-lib/", "unstable/ext-lib/b"])
+        self.tree.add(["a", "ext-lib", "ext-lib/b"])
+        revid1 = self.tree.commit("msg")
+        self.tree.branch.tags.set_tag("upstream/2.1", revid1)
+        self.make_pristine_tar_branch(
+            ["pkg_2.1.orig.tar.gz.delta", "pkg_2.1.orig-ext-lib.tar.xz.delta"]
+        )
+        rev_tree = self.tree.branch.repository.revision_tree(revid1)
+        store = rev_tree.store
+        main_tree = Tree()
+        for entry in store[rev_tree.tree].iteritems():
+            if entry.path != b"ext-lib":
+                main_tree.add(entry.path, entry.mode, entry.sha)
+        self.assertNotIn(main_tree.id, store)
+        self.source._recreate_main_tree("pkg", "2.1", b"0" * 40 + b"\n")
+        self.assertNotIn(main_tree.id, store)
+        self.source._recreate_main_tree("pkg", "2.1", main_tree.id + b"\n")
+        self.assertIn(main_tree.id, store)
+
+    def test_fetch_tarballs_no_pristine_tar_branch(self):
+        revid1 = self.tree.commit("msg")
+        self.tree.branch.tags.set_tag("upstream/2.1", revid1)
+        fetched = []
+
+        def fetch_component_tarball(package, version, component, target_dir):
+            fetched.append(component)
+            return component
+
+        self.source.fetch_component_tarball = fetch_component_tarball
+        self.source.fetch_tarballs("pkg", "2.1", "target")
+        self.source.fetch_tarballs("pkg", "2.2", "target")
+        self.assertEqual([None, None], fetched)
+
 
 class BzrPristineTarSourceTests(TestCaseWithTransport):
     def setUp(self):
