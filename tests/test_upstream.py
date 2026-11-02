@@ -915,6 +915,12 @@ class TestUpstreamVersionAddRevision(TestCaseWithTransport):
             "1.3+bzr42", upstream_version_add_revision(self, "1.3", b"somerev")
         )
 
+    def test_new_rev_sep(self):
+        self.assertEqual(
+            "1.3~bzr42",
+            upstream_version_add_revision(self, "1.3", b"somerev", sep="~"),
+        )
+
     def test_svn_new_rev(self):
         self.assertEqual(
             "1.3+svn45", upstream_version_add_revision(self, "1.3", b"somesvnrev")
@@ -963,6 +969,12 @@ class TestUpstreamVersionAddRevision(TestCaseWithTransport):
             upstream_version_add_revision(
                 self, "1.0~git20170101.0.11b1d57", b"somegitrev"
             ),
+        )
+
+    def test_git_new_rev_sep(self):
+        self.assertEqual(
+            "1.3~git20180101.1.e7f47cf",
+            upstream_version_add_revision(self, "1.3", b"somegitrev", sep="~"),
         )
 
 

@@ -276,6 +276,7 @@ def upstream_version_add_revision(upstream_branch, version_string, revid, sep="+
 
     return _upstream_version_add_revision(
         version_string,
+        sep=sep,
         gitid=gitid,
         gitdate=gitdate,
         bzr_revno=bzr_revno,
