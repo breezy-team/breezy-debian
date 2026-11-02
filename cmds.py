@@ -1483,7 +1483,7 @@ class cmd_import_upstream(Command):
         )
 
         # TODO: search for similarity etc.
-        branch, subpath = Branch.open_containing(".")
+        branch = Branch.open_containing(".")[0]
         if upstream_branch is None:
             upstream = None
             upstream_subpath = ""
@@ -1512,12 +1512,12 @@ class cmd_import_upstream(Command):
                 for parent in base_revisions.values():
                     upstream.repository.fetch(branch.repository, parent)
             db.extract_upstream_tree(
-                {comp: (revid, subpath) for comp, revid in base_revisions.items()},
+                {comp: (revid, "") for comp, revid in base_revisions.items()},
                 tempdir,
             )
             parents = {}
             for name, base_revid in base_revisions.items():
-                parents[name] = [(base_revid, subpath)]
+                parents[name] = [(base_revid, "")]
         else:
             parents = {}
             db.create_empty_upstream_tree(tempdir)
