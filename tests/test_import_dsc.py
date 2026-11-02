@@ -1924,6 +1924,58 @@ class DistributionBranchTests(BuilddebTestCase):
         # And the file has the new id in our tree
         self.assertEqual(b"a-id", tree.path2id("a"))
 
+    def test_merge_upstream_with_upstream_subpath(self):
+        self.requireFeature(PristineTarFeature)
+        version1 = Version("1.0-1")
+        version2 = Version("1.1-1")
+        builder = SourcePackageBuilder("package", version1)
+        builder.add_default_control()
+        builder.add_upstream_file("a", "Original a")
+        builder.build()
+        tree = self.make_branch_and_tree(".")
+        packaging_upstream_tree = self.make_branch_and_tree("packaging-upstream")
+        db = DistributionBranch(
+            tree.branch,
+            packaging_upstream_tree.branch,
+            tree=tree,
+            pristine_upstream_tree=packaging_upstream_tree,
+        )
+        dbs = DistributionBranchSet()
+        dbs.add_branch(db)
+        db.import_package(builder.dsc_name())
+        builder.new_version(version2)
+        builder.add_upstream_file("a", "New a")
+        builder.build()
+        upstream_tree = self.make_branch_and_tree("upstream")
+        self.build_tree(["upstream/sub/", "upstream/sub/a", "upstream/other"])
+        upstream_tree.add(["sub", "sub/a", "other"], ids=[b"sub-id", b"a-id", b"o-id"])
+        upstream_rev = upstream_tree.commit("one")
+        db = DistributionBranch(tree.branch, tree.branch, tree=tree)
+        dbs = DistributionBranchSet()
+        dbs.add_branch(db)
+        tree.lock_write()
+        self.addCleanup(tree.unlock)
+        conflicts, imported_revids = db.merge_upstream(
+            [(builder.tar_name(), None)],
+            "package",
+            str(version2),
+            version1.upstream_version,
+            upstream_branch=upstream_tree.branch,
+            upstream_revisions={None: (upstream_rev, "sub")},
+        )
+        self.assertFalse(conflicts)
+        packaging_upstream_tip = tree.get_parent_ids()[1]
+        self.assertEqual(
+            [(None, "upstream-1.1-1", packaging_upstream_tip, True, "")],
+            imported_revids,
+        )
+        revtree = tree.branch.repository.revision_tree(packaging_upstream_tip)
+        self.assertEqual(
+            [tree.branch.tags.lookup_tag("upstream-1.0"), upstream_rev],
+            revtree.get_parent_ids(),
+        )
+        self.assertEqual(b"a-id", revtree.path2id("a"))
+
     def test_merge_upstream_with_dash_in_version_number(self):
         tree = self.make_branch_and_tree("work")
         self.build_tree(["work/a"])

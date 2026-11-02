@@ -26,6 +26,7 @@ from ...osutils import (
     splitpath,
     normpath,
     is_inside_any,
+    pathjoin,
 )
 from ...trace import warning
 from ...tree import Tree
@@ -54,7 +55,12 @@ def should_ignore(relative_path: str) -> bool:
 
 
 def import_dir(
-    tree: Tree, dir: str, file_ids_from=None, target_tree=None, exclude=None
+    tree: Tree,
+    dir: str,
+    file_ids_from=None,
+    target_tree=None,
+    exclude=None,
+    target_subpath="",
 ):
     dir_input = BytesIO(dir.encode("utf-8"))
     dir_input.seek(0)
@@ -65,7 +71,12 @@ def import_dir(
         for other_tree in file_ids_from:
             es.enter_context(other_tree.lock_read())
         return _import_archive(
-            tree, dir_file, file_ids_from, target_tree=target_tree, exclude=exclude
+            tree,
+            dir_file,
+            file_ids_from,
+            target_tree=target_tree,
+            exclude=exclude,
+            target_subpath=target_subpath,
         )
 
 
@@ -93,7 +104,12 @@ def _get_paths_to_process(archive_file: str, prefix, implied_parents, exclude=No
 
 
 def _import_archive(
-    tree: Tree, archive_file: str, file_ids_from, target_tree=None, exclude=None
+    tree: Tree,
+    archive_file: str,
+    file_ids_from,
+    target_tree=None,
+    exclude=None,
+    target_subpath="",
 ):
     prefix = common_directory(names_of_files(archive_file))
     with tree.transform() as tt:
@@ -116,15 +132,18 @@ def _import_archive(
         if not tree.supports_setting_file_ids():
             file_ids_from = []
 
+        def target_path2id(path):
+            return target_tree.path2id(pathjoin(target_subpath, path))
+
         # First we find the renames
-        other_trees = file_ids_from[:]
+        path2ids = [other_tree.path2id for other_tree in file_ids_from]
         if target_tree is not None and tree.supports_setting_file_ids():
-            other_trees.insert(0, target_tree)
-        for other_tree in other_trees:
+            path2ids.insert(0, target_path2id)
+        for path2id in path2ids:
             for relative_path, member in to_process:
                 trans_id = tt.trans_id_tree_path(relative_path)
                 existing_file_id = tt.tree_file_id(trans_id)
-                target_id = other_tree.path2id(relative_path)
+                target_id = path2id(relative_path)
                 if (
                     target_id is not None
                     and target_id != existing_file_id
@@ -152,7 +171,7 @@ def _import_archive(
                         existing_file_id = None
                 found_file_id = None
                 if target_tree is not None:
-                    found_file_id = target_tree.path2id(relative_path)
+                    found_file_id = target_path2id(relative_path)
                     if found_file_id in renames:
                         if renames[found_file_id] != relative_path:
                             found_file_id = None
