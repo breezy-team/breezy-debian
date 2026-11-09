@@ -211,6 +211,7 @@ def fetch_tarball(package, version, orig_dir, locations, v3):
     ret = []
     format = None
     for location in locations:
+        location = os.fspath(location)
         if v3:
             if location.endswith(".tar.bz2") or location.endswith(".tbz2"):
                 format = "bz2"
