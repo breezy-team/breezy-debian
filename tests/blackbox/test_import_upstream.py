@@ -144,13 +144,13 @@ class TestImportUpstream(TestBaseImportDsc):
             [
                 "import-upstream",
                 new_version.upstream_version,
-                "../%s"
+                "../../%s"
                 % self._upstream_tarball_name(
                     self.package_name, new_version.upstream_version
                 ),
-                "../upstream",
+                "../../upstream",
             ],
-            working_dir="working",
+            working_dir="working/debian",
         )
         tree.lock_read()
         self.addCleanup(tree.unlock)
