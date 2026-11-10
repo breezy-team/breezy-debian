@@ -21,6 +21,7 @@
 
 import os
 import shutil
+import subprocess
 import tarfile
 
 from debian.changelog import Version
@@ -2103,3 +2104,101 @@ package (1.0-1) UNRELEASED; urgency=low
             ]
         )
         get_changelog_from_source(self.db1.tree.basedir)
+
+
+class ComponentTarballTests(BuilddebTestCase):
+    """Tests for merging an upstream version with a component tarball."""
+
+    def make_tarball(self, name, files):
+        self.build_tree_contents(
+            [(name + "/",)] + [(name + "/" + f, c) for f, c in files]
+        )
+        with tarfile.open(name + ".tar.gz", "w:gz") as tf:
+            tf.add(name)
+        shutil.rmtree(name)
+        return os.path.abspath(name + ".tar.gz")
+
+    def merge(self, format):
+        tree = self.make_branch_and_tree("work", format=format)
+        self.build_tree(["work/debian/"])
+        self.write_changelog(
+            self.make_changelog(version="0.1-1"), "work/debian/changelog"
+        )
+        tree.add(["debian/", "debian/changelog"])
+        tree.commit("packaging")
+        self.main = self.make_tarball("package_0.2.orig", [("a", b"main a\n")])
+        self.comp = self.make_tarball(
+            "package_0.2.orig-comp", [("a", b"comp a\n"), ("b", b"comp b\n")]
+        )
+        db = DistributionBranch(tree.branch, tree.branch, tree=tree)
+        dbs = DistributionBranchSet()
+        dbs.add_branch(db)
+        tree.lock_write()
+        self.addCleanup(tree.unlock)
+        conflicts, imported = db.merge_upstream(
+            [(self.comp, "comp"), (self.main, None)],
+            "package",
+            "0.2",
+            None,
+            force_pristine_tar=True,
+            committer="Tester <tester@example.com>",
+        )
+        self.assertEqual([], list(conflicts))
+        return tree, imported
+
+    def test_git(self):
+        self.requireFeature(PristineTarFeature)
+        tree, imported = self.merge("git")
+        tags = tree.branch.tags.get_tag_dict()
+        self.assertEqual(["upstream/0.2"], sorted(tags))
+        revid = tags["upstream/0.2"]
+        self.assertEqual(
+            [
+                (None, "upstream/0.2", revid, True, ""),
+                ("comp", "upstream/0.2", revid, True, "comp"),
+            ],
+            imported,
+        )
+        upstream = tree.controldir.open_branch("upstream")
+        self.assertEqual(revid, upstream.last_revision())
+        revtree = tree.branch.repository.revision_tree(revid)
+        self.assertEqual([], revtree.get_parent_ids())
+        self.assertEqual(b"main a\n", revtree.get_file_text("a"))
+        self.assertEqual(b"comp a\n", revtree.get_file_text("comp/a"))
+        self.assertFileEqual(b"comp b\n", "work/comp/b")
+        self.assertFileEqual(b"main a\n", "work/a")
+        # One delta per tarball: the main one is for a tree without comp/
+        store = tree.branch.repository._git.object_store
+        pristine_tar = tree.branch.repository.revision_tree(
+            tree.controldir.open_branch("pristine-tar").last_revision()
+        )
+        main_id = pristine_tar.get_file_text("package_0.2.orig.tar.gz.id").strip()
+        comp_id = pristine_tar.get_file_text("package_0.2.orig-comp.tar.gz.id").strip()
+        self.assertEqual([b"a"], [e.path for e in store[main_id].iteritems()])
+        self.assertEqual([b"a", b"b"], [e.path for e in store[comp_id].iteritems()])
+        self.assertEqual(comp_id, revtree._lookup_path("comp")[2])
+        os.mkdir("out")
+        for path in [self.main, self.comp]:
+            out = os.path.join(self.test_dir, "out", os.path.basename(path))
+            subprocess.check_output(
+                ["pristine-tar", "checkout", out], cwd="work", stderr=subprocess.STDOUT
+            )
+            with open(path, "rb") as f:
+                self.assertFileEqual(f.read(), out)
+
+    def test_bzr(self):
+        self.requireFeature(PristineTarFeature)
+        tree, imported = self.merge(None)
+        tags = tree.branch.tags.get_tag_dict()
+        self.assertEqual(["upstream-0.2", "upstream-0.2/comp"], sorted(tags))
+        self.assertEqual(
+            [("comp", "upstream-0.2/comp", ""), (None, "upstream-0.2", "")],
+            [(e[0], e[1], e[4]) for e in imported],
+        )
+        repository = tree.branch.repository
+        main_tree = repository.revision_tree(tags["upstream-0.2"])
+        comp_tree = repository.revision_tree(tags["upstream-0.2/comp"])
+        self.assertEqual(b"main a\n", main_tree.get_file_text("a"))
+        self.assertFalse(main_tree.has_filename("comp"))
+        self.assertEqual(b"comp a\n", comp_tree.get_file_text("a"))
+        self.assertEqual(b"comp b\n", comp_tree.get_file_text("b"))
