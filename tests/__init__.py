@@ -130,6 +130,7 @@ def load_tests(loader, basic_tests, pattern):
         "test_upstream",
         "test_upstream_uscan",
         "test_util",
+        "test_vcs_up_to_date",
         "test_tagging",
     ]
     basic_tests.addTest(
