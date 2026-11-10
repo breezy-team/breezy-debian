@@ -513,6 +513,16 @@ class UpstreamBranchSourceTests(TestCaseWithTransport):
         source = UpstreamBranchSource(self.tree.branch, {}, version_kind="release")
         self.assertEqual(("0.01_01", "0.0101"), source.get_latest_version("foo", None))
 
+    def test_get_version_after_untagged_tilde_version(self):
+        revid1 = self.tree.commit("msg")
+        self.tree.branch.tags.set_tag("1.9", revid1)
+        revid2 = self.tree.commit("msg")
+        source = UpstreamBranchSource(self.tree.branch)
+        self.assertEqual(
+            ("2.0~beta1+bzr2", "2.0~beta1+bzr2"),
+            source.get_version("foo", "2.0~beta1", revid2),
+        )
+
     def test_get_recent_versions(self):
         revid1 = self.tree.commit("msg")
         self.tree.branch.tags.set_tag("1.0", revid1)
