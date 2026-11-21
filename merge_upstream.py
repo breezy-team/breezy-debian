@@ -34,8 +34,9 @@ from debmutate.versions import new_package_version
 
 from ... import osutils
 from ...revision import NULL_REVISION
-from ...trace import note
+from ...trace import note, warning
 
+from .directory import fixup_broken_git_url
 from .import_dsc import (
     DistributionBranch,
     DistributionBranchSet,
@@ -234,22 +235,25 @@ def get_tarballs(orig_dir, tree, package, version, locations):
 
 
 def get_upstream_branch_location(tree, subpath, config, trust_package=False):
-    from lintian_brush.vcs import sanitize_url as sanitize_vcs_url
-
     if config.upstream_branch is not None:
         note("Using upstream branch %s (from configuration)", config.upstream_branch)
-        # TODO(jelmer): Make brz-debian sanitize the URL?
-        upstream_branch_location = sanitize_vcs_url(config.upstream_branch)
+        upstream_branch_location = fixup_broken_git_url(config.upstream_branch)
         upstream_branch_browse = getattr(config, "upstream_branch_browse", None)
     else:
-        from upstream_ontologist.guess import guess_upstream_metadata
-
-        guessed_upstream_metadata = guess_upstream_metadata(
-            tree.abspath(subpath),
-            trust_package=trust_package,
-            net_access=True,
-            consult_external_directory=False,
-        )
+        try:
+            from upstream_ontologist.guess import guess_upstream_metadata
+        except ModuleNotFoundError:
+            warning(
+                "upstream-ontologist not available, not guessing upstream branch URL"
+            )
+            guessed_upstream_metadata = {}
+        else:
+            guessed_upstream_metadata = guess_upstream_metadata(
+                tree.abspath(subpath),
+                trust_package=trust_package,
+                net_access=True,
+                consult_external_directory=False,
+            )
         upstream_branch_location = guessed_upstream_metadata.get("Repository")
         upstream_branch_browse = guessed_upstream_metadata.get("Repository-Browse")
         if upstream_branch_location:
