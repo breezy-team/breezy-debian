@@ -1024,7 +1024,7 @@ class GitPristineTarSource(BasePristineTarSource):
 
         return tags
 
-    def get_pristine_tar_delta(self, package, version):
+    def get_pristine_tar_delta(self, package, version, component=None):
         try:
             pristine_tar_branch = self.branch.controldir.open_branch("pristine-tar")
         except NotBranchError:
@@ -1034,7 +1034,10 @@ class GitPristineTarSource(BasePristineTarSource):
                 pristine_tar_branch.last_revision()
             )
             for suffix in self.SUFFIXES:
-                basename = "{}_{}.orig.{}".format(package, version, suffix)
+                basename = "{}_{}.orig".format(package, version)
+                if component is not None:
+                    basename += "-" + component
+                basename += "." + suffix
                 try:
                     delta_bytes = revtree.get_file_text(basename + ".delta")
                 except NoSuchFile:
@@ -1051,7 +1054,7 @@ class GitPristineTarSource(BasePristineTarSource):
         """Reconstruct a pristine-tar tarball from a git revision."""
         try:
             (dest_filename, delta_bytes, delta_id, delta_sig) = (
-                self.get_pristine_tar_delta(package, version)
+                self.get_pristine_tar_delta(package, version, component)
             )
         except PristineTarDeltaAbsent:
             revid, subpath = self.version_component_as_revision(
@@ -1066,6 +1069,8 @@ class GitPristineTarSource(BasePristineTarSource):
             )
             return dest_filename
         else:
+            if component is None:
+                self._recreate_main_tree(package, version, delta_id)
             dest_filename = os.path.join(target_dir, dest_filename)
             try:
                 subprocess.check_call(
@@ -1075,6 +1080,38 @@ class GitPristineTarSource(BasePristineTarSource):
             except subprocess.CalledProcessError as e:
                 raise PristineTarError(str(e)) from e
             return dest_filename
+
+    def _recreate_main_tree(self, package, version, delta_id):
+        """Recreate the tree of the main tarball if it has components.
+
+        gbp commits the upstream tree with the components unpacked in it.
+        The tree of the main tarball alone is only named by the pristine-tar
+        data, so it is missing from a fresh clone.
+        """
+        from dulwich.objects import Tree
+
+        tree_id = delta_id.strip()
+        components = [
+            c
+            for c in self._components_by_pristine_tar(package).get(version, {})
+            if c is not None
+        ]
+        if not components:
+            return
+        try:
+            revid, subpath = self.version_component_as_revision(package, version, None)
+        except PackageVersionNotPresent:
+            return
+        rev_tree = self.branch.repository.revision_tree(revid)
+        store = rev_tree.store
+        if tree_id in store:
+            return
+        main_tree = Tree()
+        for entry in store[rev_tree.tree].iteritems():
+            if entry.path.decode("utf-8", "replace") not in components:
+                main_tree.add(entry.path, entry.mode, entry.sha)
+        if main_tree.id == tree_id:
+            store.add_object(main_tree)
 
     def _components_by_pristine_tar(self, package=None):
         ret = {}
@@ -1092,7 +1129,7 @@ class GitPristineTarSource(BasePristineTarSource):
                 if not filename.endswith(".delta"):
                     continue
                 basename = filename[: -len(".delta")]
-                if package is None and not filename.startswith(package + "_"):
+                if package is not None and not filename.startswith(package + "_"):
                     continue
                 try:
                     rest = basename.split("_", 1)[1]
@@ -1100,8 +1137,8 @@ class GitPristineTarSource(BasePristineTarSource):
                     mutter("Unable to parse filename %r", basename)
                     continue
                 for suffix in self.SUFFIXES:
-                    if rest.endswith(suffix):
-                        rest = rest[: -len(suffix)]
+                    if rest.endswith("." + suffix):
+                        rest = rest[: -len("." + suffix)]
                         break
                 else:
                     continue
@@ -1109,7 +1146,7 @@ class GitPristineTarSource(BasePristineTarSource):
                     component = None
                     version = rest[: -len(".orig")]
                 else:
-                    m = re.match("(.*).orig-([^-]+)", rest)
+                    m = re.fullmatch(r"(.*)\.orig-([A-Za-z0-9-]+)", rest)
                     if not m:
                         continue
                     component = m.group(2)
@@ -1117,19 +1154,24 @@ class GitPristineTarSource(BasePristineTarSource):
                 ret.setdefault(version, {})[component] = basename
         return ret
 
+    def _packaging_has_component(self, component):
+        """Check whether the packaging still ships a component.
+
+        A component tarball is unpacked into a directory named after it, so
+        a delta left behind for a dropped component has no such directory.
+        """
+        if component is None or self.packaging_branch is None:
+            return True
+        return self.packaging_branch.basis_tree().has_filename(component)
+
     def fetch_tarballs(self, package, version, target_dir, components=None):
         note("Looking for upstream tarball in local branch.")
         if components is None:
-            # Scan tags for components
-            try:
-                components = list(self._components_by_version()[version].keys())
-            except KeyError:
-                try:
-                    components = list(
-                        self._components_by_pristine_tar(package)[version].keys()
-                    )
-                except KeyError:
-                    components = [None]
+            # Scan tags and the pristine-tar branch; gbp keeps one tag per version
+            found = {None, *self._components_by_version().get(version, {})}
+            by_delta = self._components_by_pristine_tar(package).get(version, {})
+            found.update(c for c in by_delta if self._packaging_has_component(c))
+            components = sorted(found, key=lambda c: c or "")
         return [
             self.fetch_component_tarball(package, version, component, target_dir)
             for component in components
