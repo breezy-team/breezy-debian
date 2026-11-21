@@ -500,6 +500,7 @@ class UpstreamBranchSource(UpstreamSource):
             actual_branch=actual_branch,
             create_dist=create_dist,
             version_kind=version_kind,
+            subpath=subpath,
         )
 
     def version_as_revision(
@@ -662,6 +663,8 @@ class UpstreamBranchSource(UpstreamSource):
                 rev_tree = None
             if rev_tree is None:
                 rev_tree = self.upstream_branch.repository.revision_tree(revid)
+            if subpath and not rev_tree.has_filename(subpath):
+                raise PackageVersionNotPresent(package, version, self)
             if self.create_dist is not None:
                 with tempfile.TemporaryDirectory() as td:
                     fn = self.create_dist(
