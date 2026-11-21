@@ -2,6 +2,8 @@ breezy-debian (2.8.82) UNRELEASED; urgency=medium
 
   * Fix AptSource to fall back to Checksums-Sha256 when Files field is
     absent from apt Sources index.
+  * Recommend cargo, debcargo, python3-toml and python3-tomlkit, which
+    are needed to build packages with a debian/debcargo.toml.
 
  -- Jelmer Vernooĳ <jelmer@debian.org>  Sat, 14 Mar 2026 19:38:37 +0000
 

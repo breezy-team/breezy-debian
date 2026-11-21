@@ -46,12 +46,15 @@ Depends: brz (>= 3.3~),
          quilt,
          ${misc:Depends},
          ${python3:Depends}
-Recommends: libalgorithm-merge-perl,
+Recommends: cargo,
+            debcargo,
+            libalgorithm-merge-perl,
             python3-distro-info,
             python3-dulwich (>= 0.19.9),
             python3-launchpadlib,
+            python3-toml,
+            python3-tomlkit,
             python3-upstream-ontologist
-Suggests: debcargo
 Provides: brz-buildpackage
 Breaks: silver-platter (<= 0.1.0)
 Enhances: brz
