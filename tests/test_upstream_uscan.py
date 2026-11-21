@@ -19,6 +19,7 @@
 
 """Tests for the upstream uscan module."""
 
+import os
 import tempfile
 
 from ....transport import NoSuchFile
@@ -29,8 +30,44 @@ from ....tests import (
 from ..upstream.uscan import (
     UScanSource,
     UScanError,
+    _xml_report_extract_target_paths,
     _xml_report_extract_upstream_version,
     _xml_report_extract_warnings,
+)
+
+# Stand-in for uscan: the component is only found without a version option
+FAKE_USCAN = """#!/bin/sh
+dest=
+version=
+for arg in "$@"; do
+    case $arg in
+        --destdir=*) dest=${arg#--destdir=};;
+        --download-debversion=*|--download-version=*) version=1;;
+    esac
+done
+echo "$*" >> "%(log)s"
+echo "<dehs>"
+echo main > "$dest/foo_1.0.orig.tar.gz"
+echo "<target-path>$dest/foo_1.0.orig.tar.gz</target-path>"
+if [ -z "$version" ] && [ -z "%(never)s" ]; then
+    echo bar > "$dest/foo_1.0.orig-bar.tar.gz"
+    echo "<component id=\"bar\">"
+    echo "<component-target-path>$dest/foo_1.0.orig-bar.tar.gz</component-target-path>"
+    echo "</component>"
+else
+    echo "<warnings>no matching files for version 1.0 in watch line</warnings>"
+fi
+echo "</dehs>"
+"""
+
+WATCH = """version=4
+https://example.com/foo-(.*).tar.gz
+"""
+
+WATCH_COMPONENT = (
+    WATCH
+    + """opts="component=bar" https://example.com/bar-(.*).tar.gz ignore
+"""
 )
 
 
@@ -58,7 +95,96 @@ class UScanSourceTests(TestCaseWithTransport):
             self.assertIsNot(src._export_file("watch", tmpdir), None)
 
 
+class UScanFetchTarballsTests(TestCaseWithTransport):
+    def setUp(self):
+        super().setUp()
+        self.tree = self.make_branch_and_tree("tree")
+        self.build_tree(["tree/debian/", "bin/", "target/"])
+        self.log = os.path.join(self.test_dir, "uscan.log")
+
+    def install_uscan(self, never=""):
+        path = os.path.join(self.test_dir, "bin", "uscan")
+        with open(path, "w") as f:
+            f.write(FAKE_USCAN % {"log": self.log, "never": never})
+        os.chmod(path, 0o755)
+        self.overrideEnv(
+            "PATH", os.path.join(self.test_dir, "bin") + ":" + os.environ["PATH"]
+        )
+
+    def make_source(self, watch):
+        self.build_tree_contents([("tree/debian/watch", watch)])
+        self.tree.smart_add(["tree/debian/watch"])
+        return UScanSource(self.tree, "", False)
+
+    def version_args(self):
+        with open(self.log) as f:
+            return [
+                [arg for arg in line.split() if arg.startswith("--download-")]
+                for line in f
+            ]
+
+    def test_no_component(self):
+        self.install_uscan()
+        src = self.make_source(WATCH)
+        self.assertEqual(
+            ["target/foo_1.0.orig.tar.gz"], src.fetch_tarballs("foo", "1.0", "target")
+        )
+        self.assertEqual([["--download-debversion=1.0"]], self.version_args())
+
+    def test_watch_without_version(self):
+        self.install_uscan()
+        src = self.make_source("https://example.com/foo-(.*).tar.gz\n")
+        self.assertEqual(
+            ["target/foo_1.0.orig.tar.gz"], src.fetch_tarballs("foo", "1.0", "target")
+        )
+        self.assertEqual([["--download-debversion=1.0"]], self.version_args())
+
+    def test_component(self):
+        self.install_uscan()
+        src = self.make_source(WATCH_COMPONENT)
+        self.assertEqual(
+            ["target/foo_1.0.orig.tar.gz", "target/foo_1.0.orig-bar.tar.gz"],
+            src.fetch_tarballs("foo", "1.0", "target"),
+        )
+        self.assertEqual([[]], self.version_args())
+        self.assertPathExists("target/foo_1.0.orig-bar.tar.gz")
+
+    def test_component_not_found(self):
+        self.install_uscan(never="1")
+        src = self.make_source(WATCH_COMPONENT)
+        self.assertRaises(UScanError, src.fetch_tarballs, "foo", "1.0", "target")
+        self.assertEqual(
+            [[], ["--download-debversion=1.0"], ["--download-version=1.0"]],
+            self.version_args(),
+        )
+
+    def test_component_other_version(self):
+        self.install_uscan()
+        src = self.make_source(WATCH_COMPONENT)
+        self.assertRaises(UScanError, src.fetch_tarballs, "foo", "0.9", "target")
+        self.assertEqual(3, len(self.version_args()))
+        self.assertEqual([], os.listdir("target"))
+
+
 class UScanOutputParsingTests(TestCase):
+    def test__xml_report_extract_target_paths(self):
+        text = b"""
+<dehs>
+<package>foo</package>
+<upstream-version>1.0</upstream-version>
+<target>foo_1.0.orig.tar.gz</target>
+<target-path>/tmp/foo_1.0.orig.tar.gz</target-path>
+<component id="bar">
+  <component-upstream-version>0.2</component-upstream-version>
+  <component-target>foo_1.0.orig-bar.tar.gz</component-target>
+  <component-target-path>/tmp/foo_1.0.orig-bar.tar.gz</component-target-path>
+</component>
+</dehs>"""
+        self.assertEqual(
+            ["/tmp/foo_1.0.orig.tar.gz", "/tmp/foo_1.0.orig-bar.tar.gz"],
+            _xml_report_extract_target_paths(text),
+        )
+
     def test__xml_report_extract_upstream_version(self):
         text = b"""
 <dehs>
