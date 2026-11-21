@@ -169,3 +169,32 @@ class TestImportUpstream(TestBaseImportDsc):
             ],
             revtree.get_parent_ids(),
         )
+
+    def test_import_upstream_git_gbp_conf(self):
+        self.make_upstream_tarball()
+        tree = self.make_branch_and_tree("working", format="git")
+        self.make_debian_dir(tree.controldir.root_transport.local_abspath("debian"))
+        self.build_tree_contents(
+            [
+                (
+                    "working/debian/gbp.conf",
+                    "[DEFAULT]\nupstream-branch = upstream/latest\n"
+                    "upstream-tag = v%(version)s\n",
+                )
+            ]
+        )
+        tree.smart_add(["working"])
+        tree.commit("packaging")
+        tar_path = "../%s" % self.upstream_tarball_name
+        out, err = self.run_bzr(
+            ["import-upstream", self.upstream_version, tar_path], working_dir="working"
+        )
+        self.assertEqual(
+            "Imported {} as tag:v{}.\n".format(tar_path, self.upstream_version),
+            out,
+        )
+        upstream_branch = tree.controldir.open_branch("upstream/latest")
+        self.assertEqual(
+            upstream_branch.last_revision(),
+            tree.branch.tags.lookup_tag("v%s" % self.upstream_version),
+        )
