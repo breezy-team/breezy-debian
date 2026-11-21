@@ -194,9 +194,7 @@ def _upstream_branch_version(
                     last_upstream[0],
                     previous_version,
                 )
-                last_upstream = (previous_version, previous_version, "+")
-            else:
-                last_upstream = (previous_version, previous_version, "~")
+            last_upstream = (previous_version, previous_version, "+")
     upstream_version = add_rev(last_upstream[0], upstream_revision, last_upstream[2])
     mangled_upstream_version = add_rev(
         last_upstream[1], upstream_revision, last_upstream[2]
