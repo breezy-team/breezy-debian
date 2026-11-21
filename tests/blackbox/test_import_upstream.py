@@ -101,6 +101,22 @@ class TestImportUpstream(TestBaseImportDsc):
         revtree = self.assertHasImportArtifacts(tree)
         self.assertUpstreamContentAndFileIdFromTree(revtree, tree)
 
+    def test_import_upstream_from_subdirectory(self):
+        self.make_upstream_tarball()
+        tree = self.make_workingdir()
+        self.run_bzr_error(
+            [
+                r"Running import-upstream from a subdirectory \(debian\) is not supported"
+            ],
+            [
+                "import-upstream",
+                self.upstream_version,
+                "../../%s" % self.upstream_tarball_name,
+            ],
+            working_dir="working/debian",
+        )
+        self.assertEqual({}, tree.branch.tags.get_tag_dict())
+
     def test_import_upstream_with_branch_no_prior_tarball(self):
         self.make_upstream_tarball()
         # The two branches are deliberately disconnected, to reflect likely

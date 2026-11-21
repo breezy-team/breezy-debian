@@ -1484,6 +1484,13 @@ class cmd_import_upstream(Command):
 
         # TODO: search for similarity etc.
         branch, subpath = Branch.open_containing(".")
+        if subpath:
+            raise BzrCommandError(
+                gettext(
+                    "Running import-upstream from a subdirectory (%s) is not supported."
+                )
+                % subpath
+            )
         if upstream_branch is None:
             upstream = None
             upstream_subpath = ""
